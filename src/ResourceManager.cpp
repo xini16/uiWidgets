@@ -1,106 +1,73 @@
 #include "ResourceManager.h"
-#include "iostream"
+#include <iostream>
 
-ResourceManager::ResourceManager(QObject *parent) : QObject(parent) {}
+ResourceManager::ResourceManager(QObject *parent)
+    : QObject(parent), root(new Resource("root", TypeA)) {}
 
-void ResourceManager::addResource(Resource *parent, const std::string &name, const ResourceType type) {
-    Resource *newResource = new Resource(name, type, parent);
-    if (parent) {
-        parent->addChild(newResource);
-    } else {
-        rootResources.push_back(newResource);
-    }
-    emit resourceUpdated();
+void ResourceManager::addResource(Resource *parent, const std::string &name,
+                                  const ResourceType type) {
+  assert(parent);
+  Resource *newResource = new Resource(name, type);
+  parent->addChild(newResource);
+  emit resourceUpdated();
 }
 
 void ResourceManager::deleteResource(Resource *resource) {
-    if (resource->getParent()) {
-        resource->getParent()->removeChild(resource);
-    } else {
-        auto it = std::find(rootResources.begin(), rootResources.end(), resource);
-        if (it != rootResources.end()) {
-            rootResources.erase(it);
-        }
-    }
-    delete resource;
+  resource->getParent()->removeChild(resource);
+  delete resource;
+  emit resourceUpdated();
+}
+
+void ResourceManager::renameResource(Resource *resource,
+                                     const std::string &newName) {
+  if (resource) {
+    resource->setName(newName);
     emit resourceUpdated();
+  }
 }
 
-void ResourceManager::renameResource(Resource *resource, const std::string &newName) {
-    if (resource) {
-        resource->setName(newName);
-        emit resourceUpdated();
-    }
+void ResourceManager::sortResources(const std::string &criteria,
+                                    const sortOrder &order) {
+  emit resourceUpdated();
 }
 
-void ResourceManager::sortResources(const std::string &criteria, const sortOrder &order) {
-    // std::cout << "[TestReceiver::sortResources] Received criteria = "
-    // << criteria()
-    // << ", order = "
-    // << sortOrder()
-    // << std::endl;    
-    emit resourceUpdated();
+void ResourceManager::removeParent(Resource *child) {
+  assert(child);
+  std::cout << "Child " << child->getName() << "@" << child
+            << " removing parent " << child->getParent() << std::endl;
+  assert(child->getParent());
+  child->removeParent();
+  emit resourceUpdated();
 }
 
-void ResourceManager::removeChild(Resource *child) {
-    if (!child) return;
-
-    auto it = std::find(rootResources.begin(), rootResources.end(), child);
-    if (it != rootResources.end()) {
-        rootResources.erase(it);
-        child->setParent(nullptr);
-    } 
-    else {
-        Resource *parent = child->getParent();
-        if (parent) {
-            parent->removeChild(child);
-        }
-    }
-    emit resourceUpdated();
-}
-
-void ResourceManager::insertChild(Resource *parent, Resource *child, std::size_t index) {
-    if (!child) return;
-    if (parent) {
-        parent->insertChild(child, index);
-    } else {
-        if (index > rootResources.size()) {
-            index = rootResources.size();
-        }
-        auto it = std::find(rootResources.begin(), rootResources.end(), child);
-        if (it != rootResources.end()) {
-            rootResources.erase(it);
-        }
-        rootResources.insert(rootResources.begin() + index, child);
-        child->setParent(nullptr);
-    }
-    emit resourceUpdated();
-    std::cout << "After insertChild: " << parent->getName() << " has children: \n";
-    for (const auto* child : parent->getChildren()) {
-        if (child) {
-            std::cout << "  -> Child: " << child->getName() << std::endl;
-        }
-    }
-    // std::cout << "insertChild -> parent=" << parent 
-    //       << ", child=" << child << std::endl;
-}
-
-std::vector<Resource *> ResourceManager::getRootResources() const {
-    return rootResources;
+void ResourceManager::insertChild(Resource *parent, Resource *child,
+                                  std::size_t index) {
+  assert(child);
+  assert(parent);
+  std::cout << "Inserting " << child->getName() << " at " << parent->getName()
+            << "-" << index << std::endl;
+  parent->insertChild(child, index);
+  emit resourceUpdated();
 }
 
 void ResourceManager::createTestData() {
-    Resource *folder1 = new Resource("Folder A", TypeA);
-    Resource *folder2 = new Resource("Folder B", TypeB);
+  Resource *folder1 = new Resource("Folder A", TypeA);
+  Resource *folder2 = new Resource("Folder B", TypeB);
 
-    Resource *file1 = new Resource("File A1", TypeA, folder1);
-    Resource *file2 = new Resource("File B1", TypeB, folder2);
+  root->addChild(folder1);
+  root->addChild(folder2);
 
-    folder1->addChild(file1);
-    folder2->addChild(file2);
+  Resource *file1 = new Resource("File A1", TypeA);
+  Resource *file2 = new Resource("File B1", TypeB);
 
-    rootResources.push_back(folder1);
-    rootResources.push_back(folder2);
+  folder1->addChild(file1);
+  folder2->addChild(file2);
 
-    emit resourceUpdated();
+  std::cout << file1->getName() << "@" << file1 << " has parent "
+            << file1->getParent() << "@" << folder1 << std::endl;
+
+  std::cout << file2->getName() << "@" << file2 << " has parent "
+            << file2->getParent() << "@" << folder2 << std::endl;
+
+  emit resourceUpdated();
 }

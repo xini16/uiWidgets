@@ -1,88 +1,64 @@
 #include "Resource.h"
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 
-Resource::Resource(const std::string &name, const ResourceType type, Resource *parent)
-    : name(name), type(type), parent(parent) {}
+Resource::Resource(const std::string &name, const ResourceType type)
+    : name(name), type(type) {}
 
 Resource::~Resource() {
-    for (Resource* child : children) {
-        delete child;
-    }
+  for (Resource *child : children) {
+    delete child;
+  }
 }
 
-std::string Resource::getName() const {
-    return name;
-}
+std::string Resource::getName() const { return name; }
 
-std::string Resource::getTag() const {
-    return tag;
-}
+std::string Resource::getTag() const { return tag; }
 
-ResourceType Resource::getType() const {
-    return type;
-}
+ResourceType Resource::getType() const { return type; }
 
-std::vector<Resource *> Resource::getChildren() const {
-    return children;
-}
+std::vector<Resource *> Resource::getChildren() const { return children; }
 
-Resource *Resource::getParent() const {
-    return parent;
-}
+Resource *Resource::getParent() const { return parent; }
 
-bool Resource::isFolder() const {
-    return !children.empty();
-}
+void Resource::setParent(Resource *newParent) { parent = newParent; }
 
-void Resource::setName(const std::string &name) {
-    this->name = name;
-}
+bool Resource::isFolder() const { return !children.empty(); }
 
-void Resource::setTag(const std::string &tag) {
-    this->tag = tag;
-}
+void Resource::setName(const std::string &name) { this->name = name; }
 
-void Resource::setType(ResourceType newType) {
-    type = newType;
-}
+void Resource::setTag(const std::string &tag) { this->tag = tag; }
 
-void Resource::setParent(Resource *newParent) {
-    parent = newParent;
-}
+void Resource::setType(ResourceType newType) { type = newType; }
 
 void Resource::addChild(Resource *child) {
-    if (std::find(children.begin(), children.end(), child) == children.end()) {
-        children.push_back(child);
-        child->parent = this;
-    }
+  assert(child->getParent() == nullptr);
+  children.push_back(child);
+  child->setParent(this);
 }
 
 void Resource::removeChild(Resource *child) {
-    if (!child) return; 
-
-    auto it = std::find(children.begin(), children.end(), child);
-    if (it != children.end()) {
-        children.erase(it);
-        if (child->getParent() == this) {
-            child->setParent(nullptr);
-        }
-    }
-}    
-
-bool Resource::hasChildren() const {
-    return !children.empty();
+  std::cout << "Resource::removeChild()" << std::endl;
+  assert(child);
+  assert(child->getParent() == this);
+  children.erase(std::remove(children.begin(), children.end(), child),
+                 children.end());
+  /* TODO JULY LEARN ERASE REMOVE IDOM */
+  child->setParent(nullptr);
+  std::cout << "-----------------" << std::endl;
 }
 
+bool Resource::hasChildren() const { return !children.empty(); }
+
 void Resource::insertChild(Resource *child, std::size_t index) {
-    if (!child) return;
-    if (index > children.size()) {
-        index = children.size();
-    }
-    auto it = std::find(children.begin(), children.end(), child);
-    if (it != children.end()) {
-        children.erase(it);
-    }
-    children.insert(children.begin() + index, child);
-    child->setParent(this);
+  assert(child);
+  assert(!child->getParent());
+  children.insert(children.begin() + index, child);
+  child->setParent(this);
+}
+
+void Resource::removeParent() {
+  std::cout << "Resource::removeParent()" << std::endl;
+  parent->removeChild(this);
 }
