@@ -44,7 +44,6 @@ void Resource::removeChild(Resource *child) {
   assert(child->getParent() == this);
   children.erase(std::remove(children.begin(), children.end(), child),
                  children.end());
-  /* TODO JULY LEARN ERASE REMOVE IDOM */
   child->setParent(nullptr);
   std::cout << "-----------------" << std::endl;
 }

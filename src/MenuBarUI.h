@@ -25,7 +25,7 @@ signals:
   void addResource(Resource *parent, const std::string &name,
                    const ResourceType type);
   void renameResource(Resource *resource, const std::string &newName);
-  void sortResources(const std::string &criteria, const sortOrder &order);
+  void sortResources(const std::string &criteria, const SortOrder &order);
   void deleteResource(Resource *resource);
 
 public slots:
@@ -38,7 +38,7 @@ private:
   QToolButton *sortButton;
   std::string criteria;
   void sortbuttonClicked();
-  sortOrder order;
+  SortOrder order;
   QPushButton *renameButton;
   QPushButton *deleteButton;
   QMenu *addMenu;

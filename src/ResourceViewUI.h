@@ -2,6 +2,7 @@
 #define RESOURCEVIEWUI_H
 
 #include "ResourceList.h"
+#include "ResourceTreeItem.h"
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QMenu>
@@ -26,14 +27,13 @@ private slots:
   void updateView();
   void showContextMenu(const QPoint &pos);
   void onResourceSelected();
-  void handleItemDrop(QTreeWidgetItem *target, QTreeWidgetItem *dragged);
+  void handleItemDrop(QTreeWidgetItem *target, ResourceTreeItem *dragged);
 
 private:
   void populateTree(QTreeWidgetItem *parentItem, Resource *resource);
-  Resource *getResourceFromItem(QTreeWidgetItem *item);
-  Resource *findResourceInChildren(Resource *parent, const std::string &name);
-  QTreeWidgetItem *findInsertPointForItem(QTreeWidgetItem *parent,
-                                          Resource *resource);
+  // Resource *getResourceFromItem(QTreeWidgetItem *item);
+  // Resource *findResourceInChildren(Resource *parent, const std::string
+  // &name);
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;

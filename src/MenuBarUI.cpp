@@ -16,21 +16,26 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
 
   connect(addA, &QAction::triggered, this, [=]() {
     lastAddedType = TypeA;
-    emit addResource(nullptr, "New Resource A", TypeA);
+    assert(selectedResource);
+    emit addResource(selectedResource, "New Resource A", TypeA);
   });
 
   connect(addB, &QAction::triggered, this, [=]() {
     lastAddedType = TypeB;
-    emit addResource(nullptr, "New Resource B", TypeB);
+    assert(selectedResource);
+    emit addResource(selectedResource, "New Resource B", TypeB);
   });
 
   connect(addC, &QAction::triggered, this, [=]() {
     lastAddedType = TypeC;
-    emit addResource(nullptr, "New Resource C", TypeC);
+    assert(selectedResource);
+    emit addResource(selectedResource, "New Resource C", TypeC);
   });
 
-  connect(addButton, &QToolButton::clicked, this,
-          [=]() { emit addResource(nullptr, "New Resource", lastAddedType); });
+  connect(addButton, &QToolButton::clicked, this, [=]() {
+    assert(selectedResource);
+    emit addResource(selectedResource, "New Resource", lastAddedType);
+  });
 
   addButton->setMenu(addMenu);
   addButton->setPopupMode(QToolButton::MenuButtonPopup);
@@ -90,7 +95,7 @@ void MenuBarUI::sortbuttonClicked() {
     emit sortResources(criteria, order);
     break;
 
-    // 这边最好有一个default： assert(false)； 比较安全
+    assert(false);
   }
 }
 

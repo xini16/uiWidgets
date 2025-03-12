@@ -27,7 +27,7 @@ void ResourceManager::renameResource(Resource *resource,
 }
 
 void ResourceManager::sortResources(const std::string &criteria,
-                                    const sortOrder &order) {
+                                    const SortOrder &order) {
   emit resourceUpdated();
 }
 
