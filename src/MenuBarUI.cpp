@@ -14,14 +14,15 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
     connect(action, &QAction::triggered, this, [=]() {
       lastAddedType = type;
       if (selectedResource) {
-        emit addResource(selectedResource, "New Resource " + typeName, type);
+        emit addResource(selectedResource.value(), "New Resource " + typeName,
+                         type);
         return;
       }
       if (selectedInsertPoint) {
-        ResourceTreeItem *parentItem =
-            dynamic_cast<ResourceTreeItem *>(selectedInsertPoint->parent());
+        ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+            selectedInsertPoint.value()->parent());
         Resource *parent = parentItem->getResource();
-        int index = parentItem->indexOfChild(selectedInsertPoint);
+        int index = parentItem->indexOfChild(selectedInsertPoint.value());
         emit insertNewResource(parent, "New Resource " + typeName, type, index);
         return;
       }
@@ -33,14 +34,15 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
   addButton->setPopupMode(QToolButton::MenuButtonPopup);
   connect(addButton, &QToolButton::clicked, this, [=]() {
     if (selectedResource) {
-      emit addResource(selectedResource, "New Resource ", lastAddedType);
+      emit addResource(selectedResource.value(), "New Resource ",
+                       lastAddedType);
       return;
     }
     if (selectedInsertPoint) {
-      ResourceTreeItem *parentItem =
-          dynamic_cast<ResourceTreeItem *>(selectedInsertPoint->parent());
+      ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+          selectedInsertPoint.value()->parent());
       Resource *parent = parentItem->getResource();
-      int index = parentItem->indexOfChild(selectedInsertPoint);
+      int index = parentItem->indexOfChild(selectedInsertPoint.value());
       emit insertNewResource(parent, "New Resource ", lastAddedType, index);
       return;
     }
@@ -103,7 +105,7 @@ void MenuBarUI::sortbuttonClicked() {
 
 void MenuBarUI::onDeleteResource() {
   if (selectedResource) {
-    emit deleteResource(selectedResource);
+    emit deleteResource(selectedResource.value());
     selectedResource = nullptr;
   }
 }
@@ -116,7 +118,7 @@ void MenuBarUI::onRenameResource() {
         QLineEdit::Normal, "", &inputFinished);
     if (inputFinished && !newName.isEmpty()) {
       std::string stdNewName = newName.toStdString();
-      emit renameResource(selectedResource, stdNewName);
+      emit renameResource(selectedResource.value(), stdNewName);
       selectedResource = nullptr;
     } else {
       QMessageBox::warning(this, tr("Error"), tr("Invalid input"));

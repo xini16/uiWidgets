@@ -30,12 +30,12 @@ int main(int argc, char *argv[]) {
   QObject::connect(resourceView, &ResourceViewUI::resourceSelected, menuBar,
                    [=](Resource *resource) {
                      menuBar->selectedResource = resource;
-                     menuBar->selectedInsertPoint = nullptr;
+                     menuBar->selectedInsertPoint.reset();
                    });
   QObject::connect(resourceView, &ResourceViewUI::insertPointSelected, menuBar,
                    [=](QTreeWidgetItem *insertPoint) {
                      menuBar->selectedInsertPoint = insertPoint;
-                     menuBar->selectedResource = nullptr;
+                     menuBar->selectedResource.reset();
                    });
 
   layout->addWidget(menuBar);

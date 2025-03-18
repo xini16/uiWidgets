@@ -41,7 +41,7 @@ private:
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
   Resource *selectedResource;
-  std::unordered_map<Resource *, bool> expandedStateMap;
+  std::unordered_map<Resource *, bool> expansionStateMap;
 };
 
 #endif // RESOURCEVIEWUI_H

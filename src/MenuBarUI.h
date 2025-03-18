@@ -21,8 +21,8 @@ class MenuBarUI : public QWidget {
 
 public:
   explicit MenuBarUI(QWidget *parent = nullptr);
-  Resource *selectedResource = nullptr;
-  QTreeWidgetItem *selectedInsertPoint = nullptr;
+  std::optional<Resource *> selectedResource;
+  std::optional<QTreeWidgetItem *> selectedInsertPoint;
 
 signals:
   void addResource(Resource *parent, const std::string &name,
@@ -39,11 +39,11 @@ public slots:
 
 private:
   QToolButton *addButton;
-  ResourceType lastAddedType;
+  ResourceType lastAddedType = TypeA;
   QToolButton *sortButton;
-  std::string criteria;
+  std::string criteria = "name";
   void sortbuttonClicked();
-  SortOrder order;
+  SortOrder order = None;
   QPushButton *renameButton;
   QPushButton *deleteButton;
   QMenu *addMenu;

@@ -29,7 +29,7 @@ ResourceViewUI::ResourceViewUI(ResourceManager *resourceManager,
 }
 
 void ResourceViewUI::updateView() {
-  expandedStateMap.clear();
+  expansionStateMap.clear();
   for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
     recordExpandedStateFromTree(resourceList->topLevelItem(i));
   }
@@ -88,7 +88,7 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
     ResourceTreeItem *parentItem =
         dynamic_cast<ResourceTreeItem *>(target->parent());
     Resource *parent = parentItem->getResource();
-    int index = parentItem->indexOfChild(target);
+    int index = parentItem->indexOfChild(target) / 2;
     std::cout << "dragged resource has parent " << draggedResource->getParent()
               << std::endl;
     resourceManager->removeParent(draggedResource);
@@ -110,7 +110,7 @@ void ResourceViewUI::recordExpandedStateFromTree(QTreeWidgetItem *item) {
     return;
   ResourceTreeItem *rti = dynamic_cast<ResourceTreeItem *>(item);
   if (rti && rti->getResource()) {
-    expandedStateMap[rti->getResource()] =
+    expansionStateMap[rti->getResource()] =
         resourceList->isExpanded(resourceList->indexFromItem(rti));
   }
   for (int i = 0; i < item->childCount(); ++i) {
@@ -123,8 +123,8 @@ void ResourceViewUI::restoreExpandedStateFromTree(QTreeWidgetItem *item) {
     return;
   ResourceTreeItem *rti = dynamic_cast<ResourceTreeItem *>(item);
   if (rti && rti->getResource()) {
-    if (expandedStateMap.find(rti->getResource()) != expandedStateMap.end() &&
-        expandedStateMap[rti->getResource()]) {
+    if (expansionStateMap.find(rti->getResource()) != expansionStateMap.end() &&
+        expansionStateMap[rti->getResource()]) {
       resourceList->setExpanded(resourceList->indexFromItem(rti), true);
     }
   }
