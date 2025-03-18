@@ -39,13 +39,11 @@ void Resource::addChild(Resource *child) {
 }
 
 void Resource::removeChild(Resource *child) {
-  std::cout << "Resource::removeChild()" << std::endl;
   assert(child);
   assert(child->getParent() == this);
   children.erase(std::remove(children.begin(), children.end(), child),
                  children.end());
   child->setParent(nullptr);
-  std::cout << "-----------------" << std::endl;
 }
 
 bool Resource::hasChildren() const { return !children.empty(); }

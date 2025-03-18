@@ -25,9 +25,18 @@ int main(int argc, char *argv[]) {
                    &ResourceManager::sortResources);
   QObject::connect(menuBar, &MenuBarUI::deleteResource, &resourceManager,
                    &ResourceManager::deleteResource);
-  QObject::connect(
-      resourceView, &ResourceViewUI::resourceSelected, menuBar,
-      [=](Resource *resource) { menuBar->selectedResource = resource; });
+  QObject::connect(menuBar, &MenuBarUI::insertNewResource, &resourceManager,
+                   &ResourceManager::insertNewResource);
+  QObject::connect(resourceView, &ResourceViewUI::resourceSelected, menuBar,
+                   [=](Resource *resource) {
+                     menuBar->selectedResource = resource;
+                     menuBar->selectedInsertPoint = nullptr;
+                   });
+  QObject::connect(resourceView, &ResourceViewUI::insertPointSelected, menuBar,
+                   [=](QTreeWidgetItem *insertPoint) {
+                     menuBar->selectedInsertPoint = insertPoint;
+                     menuBar->selectedResource = nullptr;
+                   });
 
   layout->addWidget(menuBar);
   layout->addWidget(resourceView);

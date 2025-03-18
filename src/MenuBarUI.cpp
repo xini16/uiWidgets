@@ -3,42 +3,49 @@
 MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
   QHBoxLayout *layout = new QHBoxLayout(this);
 
-  // TODO 这边应该允许用户自定义type，可以用template + enum 的形式，
-  // 每个enum有自己对应的bimap of string
-  // 要达到不用改源代码直接传参数就能用的标准~~~
-  // template 需要学两天的，这个可以改完架构与bug之后作为优化去做
   addButton = new QToolButton(this);
   addButton->setText("Add");
   addMenu = new QMenu(this);
-  QAction *addA = addMenu->addAction("Type A");
-  QAction *addB = addMenu->addAction("Type B");
-  QAction *addC = addMenu->addAction("Type C");
+  for (const auto &entry : resourceType.left) {
+    ResourceType type = entry.first;
+    std::string typeName = entry.second;
+    QAction *action = addMenu->addAction(QString::fromStdString(typeName));
 
-  connect(addA, &QAction::triggered, this, [=]() {
-    lastAddedType = TypeA;
-    assert(selectedResource);
-    emit addResource(selectedResource, "New Resource A", TypeA);
-  });
-
-  connect(addB, &QAction::triggered, this, [=]() {
-    lastAddedType = TypeB;
-    assert(selectedResource);
-    emit addResource(selectedResource, "New Resource B", TypeB);
-  });
-
-  connect(addC, &QAction::triggered, this, [=]() {
-    lastAddedType = TypeC;
-    assert(selectedResource);
-    emit addResource(selectedResource, "New Resource C", TypeC);
-  });
-
-  connect(addButton, &QToolButton::clicked, this, [=]() {
-    assert(selectedResource);
-    emit addResource(selectedResource, "New Resource", lastAddedType);
-  });
+    connect(action, &QAction::triggered, this, [=]() {
+      lastAddedType = type;
+      if (selectedResource) {
+        emit addResource(selectedResource, "New Resource " + typeName, type);
+        return;
+      }
+      if (selectedInsertPoint) {
+        ResourceTreeItem *parentItem =
+            dynamic_cast<ResourceTreeItem *>(selectedInsertPoint->parent());
+        Resource *parent = parentItem->getResource();
+        int index = parentItem->indexOfChild(selectedInsertPoint);
+        emit insertNewResource(parent, "New Resource " + typeName, type, index);
+        return;
+      }
+      assert(false);
+    });
+  }
 
   addButton->setMenu(addMenu);
   addButton->setPopupMode(QToolButton::MenuButtonPopup);
+  connect(addButton, &QToolButton::clicked, this, [=]() {
+    if (selectedResource) {
+      emit addResource(selectedResource, "New Resource ", lastAddedType);
+      return;
+    }
+    if (selectedInsertPoint) {
+      ResourceTreeItem *parentItem =
+          dynamic_cast<ResourceTreeItem *>(selectedInsertPoint->parent());
+      Resource *parent = parentItem->getResource();
+      int index = parentItem->indexOfChild(selectedInsertPoint);
+      emit insertNewResource(parent, "New Resource ", lastAddedType, index);
+      return;
+    }
+    assert(false);
+  });
 
   QMenu *sortHoverMenu = new QMenu(this);
   QAction *name = sortHoverMenu->addAction("name");
@@ -78,25 +85,20 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
 void MenuBarUI::sortbuttonClicked() {
   switch (order) {
   case None:
-    sortButton->setText("Ascending");
     order = Ascending;
-    emit sortResources(criteria, order);
     break;
-
   case Ascending:
-    sortButton->setText("Descending");
     order = Descending;
-    emit sortResources(criteria, order);
     break;
-
   case Descending:
-    sortButton->setText("Sort");
     order = None;
-    emit sortResources(criteria, order);
     break;
-
+  default:
     assert(false);
   }
+  std::string nextOrderText = sortOrder.left.at(order);
+  sortButton->setText(QString::fromStdString(nextOrderText));
+  emit sortResources(criteria, order);
 }
 
 void MenuBarUI::onDeleteResource() {

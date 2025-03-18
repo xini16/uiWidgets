@@ -50,6 +50,15 @@ void ResourceManager::insertChild(Resource *parent, Resource *child,
   emit resourceUpdated();
 }
 
+void ResourceManager::insertNewResource(Resource *parent,
+                                        const std::string &name,
+                                        const ResourceType type,
+                                        std::size_t index) {
+  assert(parent);
+  Resource *newResource = new Resource(name, type);
+  insertChild(parent, newResource, index);
+}
+
 void ResourceManager::createTestData() {
   Resource *folder1 = new Resource("Folder A", TypeA);
   Resource *folder2 = new Resource("Folder B", TypeB);
