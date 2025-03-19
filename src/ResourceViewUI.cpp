@@ -1,10 +1,12 @@
 #include "ResourceViewUI.h"
 #include "ResourceManager.h"
+#include "src/ResourceTreeItem.h"
 #include <QCursor>
 #include <QInputDialog>
 #include <QMenu>
 #include <QMessageBox>
 #include <iostream>
+#include <qtreewidget.h>
 
 ResourceViewUI::ResourceViewUI(ResourceManager *resourceManager,
                                QWidget *parent)
@@ -18,7 +20,7 @@ ResourceViewUI::ResourceViewUI(ResourceManager *resourceManager,
   connect(resourceList, &ResourceList::customContextMenuRequested, this,
           &ResourceViewUI::showContextMenu);
   connect(resourceList, &ResourceList::itemClicked, this,
-          &ResourceViewUI::onResourceSelected);
+          &ResourceViewUI::onItemSelected);
   connect(resourceList, &ResourceList::itemDropped, this,
           &ResourceViewUI::handleItemDrop);
   connect(resourceManager, &ResourceManager::resourceUpdated, this,
@@ -27,16 +29,23 @@ ResourceViewUI::ResourceViewUI(ResourceManager *resourceManager,
 }
 
 void ResourceViewUI::updateView() {
+  expansionStateMap.clear();
+  for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
+    recordExpandedStateFromTree(resourceList->topLevelItem(i));
+  }
   resourceList->clear();
   for (Resource *resource : resourceManager->getRoot()->getChildren()) {
     QTreeWidgetItem *insertBeforeItem = new QTreeWidgetItem(resourceList);
-    insertBeforeItem->setFlags(insertBeforeItem->flags() &
-                               ~Qt::ItemIsSelectable);
+    insertBeforeItem->setFlags(insertBeforeItem->flags() |
+                               Qt::ItemIsSelectable);
     insertBeforeItem->setSizeHint(0, QSize(0, 2));
     insertBeforeItem->setBackground(0, QBrush(Qt::gray));
-    QTreeWidgetItem *item = new QTreeWidgetItem(resourceList);
+    ResourceTreeItem *item = new ResourceTreeItem(resource, resourceList);
     item->setText(0, QString::fromStdString(resource->getName()));
     populateTree(item, resource);
+  }
+  for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
+    restoreExpandedStateFromTree(resourceList->topLevelItem(i));
   }
 }
 
@@ -44,11 +53,11 @@ void ResourceViewUI::populateTree(QTreeWidgetItem *parentItem,
                                   Resource *resource) {
   for (Resource *child : resource->getChildren()) {
     QTreeWidgetItem *insertBeforeItem = new QTreeWidgetItem(parentItem);
-    insertBeforeItem->setFlags(insertBeforeItem->flags() &
-                               ~Qt::ItemIsSelectable);
+    insertBeforeItem->setFlags(insertBeforeItem->flags() |
+                               Qt::ItemIsSelectable);
     insertBeforeItem->setSizeHint(0, QSize(0, 2));
     insertBeforeItem->setBackground(0, QBrush(Qt::gray));
-    QTreeWidgetItem *childItem = new QTreeWidgetItem(parentItem);
+    ResourceTreeItem *childItem = new ResourceTreeItem(child, parentItem);
     childItem->setText(0, QString::fromStdString(child->getName()));
     parentItem->addChild(insertBeforeItem);
     parentItem->addChild(childItem);
@@ -57,86 +66,71 @@ void ResourceViewUI::populateTree(QTreeWidgetItem *parentItem,
   }
 }
 
-void ResourceViewUI::onResourceSelected() {
-  if (resourceList->currentItem()) {
-    Resource *selectedResource =
-        getResourceFromItem(resourceList->currentItem());
-    if (selectedResource) {
-      emit resourceSelected(selectedResource);
-    }
+void ResourceViewUI::onItemSelected() {
+  ResourceTreeItem *item =
+      dynamic_cast<ResourceTreeItem *>(resourceList->currentItem());
+  if (item) {
+    Resource *selectedResource = item->getResource();
+    assert(selectedResource);
+    emit resourceSelected(selectedResource);
+  } else {
+    emit insertPointSelected(resourceList->currentItem());
   }
 }
 
 void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
-                                    QTreeWidgetItem *dragged) {
+                                    ResourceTreeItem *dragged) {
   assert(target);
   assert(dragged);
-  Resource *draggedResource = getResourceFromItem(dragged);
+  Resource *draggedResource = dragged->getResource();
   assert(draggedResource);
-
-  QTreeWidgetItem *parentItem = target->parent();
-  Resource *parent = getResourceFromItem(parentItem);
-  int index = parentItem->indexOfChild(target);
-  std::cout << "dragged resource has parent " << draggedResource->getParent()
-            << std::endl;
-  resourceManager->removeParent(draggedResource);
-  resourceManager->insertChild(parent, draggedResource, index);
+  if (target->text(0).isEmpty()) {
+    ResourceTreeItem *parentItem =
+        dynamic_cast<ResourceTreeItem *>(target->parent());
+    Resource *parent = parentItem->getResource();
+    int index = parentItem->indexOfChild(target) / 2;
+    std::cout << "dragged resource has parent " << draggedResource->getParent()
+              << std::endl;
+    resourceManager->removeParent(draggedResource);
+    resourceManager->insertChild(parent, draggedResource, index);
+  } else {
+    ResourceTreeItem *targetResource = dynamic_cast<ResourceTreeItem *>(target);
+    assert(targetResource);
+    Resource *parent = targetResource->getResource();
+    assert(parent);
+    int index = parent->getChildren().size();
+    resourceManager->removeParent(draggedResource);
+    resourceManager->insertChild(parent, draggedResource, index);
+  }
   updateView();
 }
 
-// TODO QTreeWidgetItem
-// ！！与resource互相查找的方式可以更加直接，建议每个resource记录自己的QTreeWidgetItem，然后给QTreeWidget、QTreeWidgetItem写子类，可以直接携带Resource*
-// 这样做的话这个下面的几个function可以写的很短很短~运行效率也好（不用挨个比对string）
-QTreeWidgetItem *ResourceViewUI::findInsertPointForItem(QTreeWidgetItem *parent,
-                                                        Resource *resource) {
-  assert(parent);
-  for (int i = 0; i < parent->childCount(); i++) {
-    QTreeWidgetItem *child = parent->child(i);
-
-    if (getResourceFromItem(child) == resource && i > 0) {
-      QTreeWidgetItem *insertPoint = parent->child(i - 1);
-      if (insertPoint->text(0).isEmpty()) {
-        return insertPoint;
-      }
-    }
-
-    QTreeWidgetItem *found = findInsertPointForItem(child, resource);
-    if (found)
-      return found;
+void ResourceViewUI::recordExpandedStateFromTree(QTreeWidgetItem *item) {
+  if (!item)
+    return;
+  ResourceTreeItem *rti = dynamic_cast<ResourceTreeItem *>(item);
+  if (rti && rti->getResource()) {
+    expansionStateMap[rti->getResource()] =
+        resourceList->isExpanded(resourceList->indexFromItem(rti));
   }
-
-  return nullptr; // TODO  avoid doing this
+  for (int i = 0; i < item->childCount(); ++i) {
+    recordExpandedStateFromTree(item->child(i));
+  }
 }
 
-Resource *ResourceViewUI::getResourceFromItem(QTreeWidgetItem *item) {
-  if (!item) {
-    return resourceManager->getRoot();
-  }
-  for (Resource *resource : resourceManager->getRoot()->getChildren()) {
-    if (resource->getName() == item->text(0).toStdString()) {
-      return resource;
-    }
-    Resource *childResource =
-        findResourceInChildren(resource, item->text(0).toStdString());
-    if (childResource) {
-      return childResource;
+void ResourceViewUI::restoreExpandedStateFromTree(QTreeWidgetItem *item) {
+  if (!item)
+    return;
+  ResourceTreeItem *rti = dynamic_cast<ResourceTreeItem *>(item);
+  if (rti && rti->getResource()) {
+    if (expansionStateMap.find(rti->getResource()) != expansionStateMap.end() &&
+        expansionStateMap[rti->getResource()]) {
+      resourceList->setExpanded(resourceList->indexFromItem(rti), true);
     }
   }
-  assert(false);
-}
-
-Resource *ResourceViewUI::findResourceInChildren(Resource *parent,
-                                                 const std::string &name) {
-  for (Resource *child : parent->getChildren()) {
-    if (child->getName() == name) {
-      return child;
-    }
-    Resource *result = findResourceInChildren(child, name);
-    if (result) {
-      return result;
-    }
+  for (int i = 0; i < item->childCount(); ++i) {
+    restoreExpandedStateFromTree(item->child(i));
   }
-  return nullptr; // TODO  avoid doing this, never return nullptr
 }
 
 void ResourceViewUI::showContextMenu(const QPoint &pos) {

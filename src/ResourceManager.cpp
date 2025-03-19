@@ -27,7 +27,7 @@ void ResourceManager::renameResource(Resource *resource,
 }
 
 void ResourceManager::sortResources(const std::string &criteria,
-                                    const sortOrder &order) {
+                                    const SortOrder &order) {
   emit resourceUpdated();
 }
 
@@ -48,6 +48,15 @@ void ResourceManager::insertChild(Resource *parent, Resource *child,
             << "-" << index << std::endl;
   parent->insertChild(child, index);
   emit resourceUpdated();
+}
+
+void ResourceManager::insertNewResource(Resource *parent,
+                                        const std::string &name,
+                                        const ResourceType type,
+                                        std::size_t index) {
+  assert(parent);
+  Resource *newResource = new Resource(name, type);
+  insertChild(parent, newResource, index);
 }
 
 void ResourceManager::createTestData() {

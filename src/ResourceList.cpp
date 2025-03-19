@@ -1,4 +1,5 @@
 #include "ResourceList.h"
+#include "ResourceTreeItem.h"
 
 ResourceList::ResourceList(QWidget *parent) : QTreeWidget(parent) {
   setAcceptDrops(true);
@@ -45,13 +46,9 @@ void ResourceList::dragMoveEvent(QDragMoveEvent *event) {
 
 void ResourceList::dropEvent(QDropEvent *event) {
   QTreeWidgetItem *itemUnderCursor = itemAt(event->position().toPoint());
-  if (!itemUnderCursor) {
-    return;
-  }
-  QTreeWidgetItem *draggedItem = currentItem();
-  if (!draggedItem) {
-    return;
-  }
+  ResourceTreeItem *draggedItem =
+      dynamic_cast<ResourceTreeItem *>(currentItem());
+  assert(draggedItem);
 
   emit itemDropped(itemUnderCursor, draggedItem);
 

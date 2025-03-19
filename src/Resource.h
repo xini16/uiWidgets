@@ -16,13 +16,13 @@ public:
   bool isFolder() const;
 
   void setName(const std::string &name);
-  void setTag(const std::string &tag); // 这个tag在这里起了什么作用呢？
+  void setTag(const std::string &tag);
   void setType(ResourceType type);
   void setParent(Resource *newParent);
   void addChild(Resource *child);
   void removeChild(Resource *child);
   bool hasChildren() const;
-  void insertChild(Resource *child, std::size_t index); // size_t好评
+  void insertChild(Resource *child, std::size_t index);
   void removeParent();
 
 private:

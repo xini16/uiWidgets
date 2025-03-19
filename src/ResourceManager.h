@@ -12,9 +12,11 @@ public:
 public slots:
   void addResource(Resource *parent, const std::string &name,
                    const ResourceType type);
+  void insertNewResource(Resource *parent, const std::string &name,
+                         const ResourceType type, std::size_t index);
   void deleteResource(Resource *resource);
   void renameResource(Resource *resource, const std::string &newName);
-  void sortResources(const std::string &criteria, const sortOrder &order);
+  void sortResources(const std::string &criteria, const SortOrder &order);
   void insertChild(Resource *parent, Resource *child, std::size_t index);
   void removeParent(Resource *child);
   void createTestData();

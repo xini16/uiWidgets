@@ -10,10 +10,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1")
+set(Boost_INCLUDE_DIR "/usr/include")
 
-
+find_package(Boost REQUIRED)
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
-
+include_directories(${Boost_INCLUDE_DIRS})
 add_executable(ui src/main.cpp src/ResourceViewUI.cpp src/ResourceManager.cpp src/Resource.cpp src/MenuBarUI.cpp src/ResourceList.cpp)
 
 target_link_libraries(ui Qt6::Widgets)

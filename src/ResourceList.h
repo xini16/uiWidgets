@@ -1,6 +1,7 @@
 #ifndef RESOURCELIST_H
 #define RESOURCELIST_H
 
+#include "src/ResourceTreeItem.h"
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
@@ -13,7 +14,7 @@ public:
   explicit ResourceList(QWidget *parent = nullptr);
 
 signals:
-  void itemDropped(QTreeWidgetItem *target, QTreeWidgetItem *dragged);
+  void itemDropped(QTreeWidgetItem *target, ResourceTreeItem *dragged);
 
 protected:
   void dragEnterEvent(QDragEnterEvent *event) override;

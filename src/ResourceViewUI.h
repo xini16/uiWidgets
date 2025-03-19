@@ -2,6 +2,7 @@
 #define RESOURCEVIEWUI_H
 
 #include "ResourceList.h"
+#include "ResourceTreeItem.h"
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QMenu>
@@ -9,6 +10,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <qtreewidget.h>
+#include <unordered_map>
 
 class Resource;
 class ResourceManager;
@@ -22,22 +25,23 @@ public:
 
 signals:
   void resourceSelected(Resource *resource);
+  void insertPointSelected(QTreeWidgetItem *insertPoint);
+
 private slots:
   void updateView();
   void showContextMenu(const QPoint &pos);
-  void onResourceSelected();
-  void handleItemDrop(QTreeWidgetItem *target, QTreeWidgetItem *dragged);
+  void onItemSelected();
+  void handleItemDrop(QTreeWidgetItem *target, ResourceTreeItem *dragged);
 
 private:
   void populateTree(QTreeWidgetItem *parentItem, Resource *resource);
-  Resource *getResourceFromItem(QTreeWidgetItem *item);
-  Resource *findResourceInChildren(Resource *parent, const std::string &name);
-  QTreeWidgetItem *findInsertPointForItem(QTreeWidgetItem *parent,
-                                          Resource *resource);
+  void recordExpandedStateFromTree(QTreeWidgetItem *item);
+  void restoreExpandedStateFromTree(QTreeWidgetItem *item);
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
-  Resource *selectedResource;
+  std::optional<Resource *> selectedResource = {};
+  std::unordered_map<Resource *, bool> expansionStateMap;
 };
 
 #endif // RESOURCEVIEWUI_H

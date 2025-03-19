@@ -1,6 +1,7 @@
 #ifndef MENUBARUI_H
 #define MENUBARUI_H
 
+#include "ResourceViewUI.h"
 #include "types.h"
 #include <QHBoxLayout>
 #include <QInputDialog>
@@ -10,6 +11,7 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QWidget>
+#include <qtreewidget.h>
 
 class Resource;
 class ResourceManager;
@@ -19,13 +21,16 @@ class MenuBarUI : public QWidget {
 
 public:
   explicit MenuBarUI(QWidget *parent = nullptr);
-  Resource *selectedResource;
+  std::optional<Resource *> selectedResource = {};
+  std::optional<QTreeWidgetItem *> selectedInsertPoint = {};
 
 signals:
   void addResource(Resource *parent, const std::string &name,
                    const ResourceType type);
+  void insertNewResource(Resource *parent, const std::string &name,
+                         const ResourceType type, std::size_t index);
   void renameResource(Resource *resource, const std::string &newName);
-  void sortResources(const std::string &criteria, const sortOrder &order);
+  void sortResources(const std::string &criteria, const SortOrder &order);
   void deleteResource(Resource *resource);
 
 public slots:
@@ -34,11 +39,11 @@ public slots:
 
 private:
   QToolButton *addButton;
-  ResourceType lastAddedType;
+  ResourceType lastAddedType = TypeA;
   QToolButton *sortButton;
-  std::string criteria;
+  std::string criteria = "name";
   void sortbuttonClicked();
-  sortOrder order;
+  SortOrder order = None;
   QPushButton *renameButton;
   QPushButton *deleteButton;
   QMenu *addMenu;
