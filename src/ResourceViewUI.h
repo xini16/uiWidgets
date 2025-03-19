@@ -40,7 +40,7 @@ private:
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
-  Resource *selectedResource;
+  std::optional<Resource *> selectedResource = {};
   std::unordered_map<Resource *, bool> expansionStateMap;
 };
 

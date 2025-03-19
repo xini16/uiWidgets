@@ -21,8 +21,8 @@ class MenuBarUI : public QWidget {
 
 public:
   explicit MenuBarUI(QWidget *parent = nullptr);
-  std::optional<Resource *> selectedResource;
-  std::optional<QTreeWidgetItem *> selectedInsertPoint;
+  std::optional<Resource *> selectedResource = {};
+  std::optional<QTreeWidgetItem *> selectedInsertPoint = {};
 
 signals:
   void addResource(Resource *parent, const std::string &name,
