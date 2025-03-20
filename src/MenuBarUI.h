@@ -3,6 +3,7 @@
 
 #include "ResourceViewUI.h"
 #include "types.h"
+#include <QActionGroup>
 #include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLineEdit>
@@ -32,10 +33,12 @@ signals:
   void renameResource(Resource *resource, const std::string &newName);
   void sortResources(const std::string &criteria, const SortOrder &order);
   void deleteResource(Resource *resource);
+  void searchResource(const QString &searchText);
 
 public slots:
   void onDeleteResource();
   void onRenameResource();
+  void onSearchTextChanged(const QString &text);
 
 private:
   QToolButton *addButton;
@@ -44,6 +47,7 @@ private:
   std::string criteria = "name";
   void sortbuttonClicked();
   SortOrder order = None;
+  QLineEdit *searchBox;
   QPushButton *renameButton;
   QPushButton *deleteButton;
   QMenu *addMenu;

@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <algorithm>
 #include <qtreewidget.h>
 #include <unordered_map>
 
@@ -27,6 +28,10 @@ signals:
   void resourceSelected(Resource *resource);
   void insertPointSelected(QTreeWidgetItem *insertPoint);
 
+public slots:
+  void filterResources(const QString &searchText);
+  void sortResources(const std::string &criteria, const SortOrder &order);
+
 private slots:
   void updateView();
   void showContextMenu(const QPoint &pos);
@@ -37,11 +42,14 @@ private:
   void populateTree(QTreeWidgetItem *parentItem, Resource *resource);
   void recordExpandedStateFromTree(QTreeWidgetItem *item);
   void restoreExpandedStateFromTree(QTreeWidgetItem *item);
+  void filterTreeItem(QTreeWidgetItem *item, const QString &searchText);
+  void repaintPage();
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
   std::optional<Resource *> selectedResource = {};
   std::unordered_map<Resource *, bool> expansionStateMap;
+  std::optional<Resource *> clipboardResource = {};
 };
 
 #endif // RESOURCEVIEWUI_H

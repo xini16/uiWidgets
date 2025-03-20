@@ -22,7 +22,7 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
         ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
             selectedInsertPoint.value()->parent());
         Resource *parent = parentItem->getResource();
-        int index = parentItem->indexOfChild(selectedInsertPoint.value());
+        int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
         emit insertNewResource(parent, "New Resource " + typeName, type, index);
         return;
       }
@@ -42,7 +42,7 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
       ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
           selectedInsertPoint.value()->parent());
       Resource *parent = parentItem->getResource();
-      int index = parentItem->indexOfChild(selectedInsertPoint.value());
+      int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
       emit insertNewResource(parent, "New Resource ", lastAddedType, index);
       return;
     }
@@ -50,8 +50,14 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
   });
 
   QMenu *sortHoverMenu = new QMenu(this);
+  QActionGroup *sortGroup = new QActionGroup(this);
+  sortGroup->setExclusive(true);
   QAction *name = sortHoverMenu->addAction("name");
+  name->setCheckable(true);
   QAction *tag = sortHoverMenu->addAction("tag");
+  tag->setCheckable(true);
+  sortGroup->addAction(name);
+  sortGroup->addAction(tag);
 
   sortButton = new QToolButton(this);
   sortButton->setText("Sort");
@@ -68,6 +74,12 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
   });
   connect(sortButton, &QPushButton::clicked, this,
           [=]() { sortbuttonClicked(); });
+
+  searchBox = new QLineEdit(this);
+  searchBox->setPlaceholderText("Search...");
+  layout->addWidget(searchBox);
+  connect(searchBox, &QLineEdit::textChanged, this,
+          &MenuBarUI::onSearchTextChanged);
 
   renameButton = new QPushButton("Rename", this);
   connect(renameButton, &QPushButton::clicked, this,
@@ -125,4 +137,8 @@ void MenuBarUI::onRenameResource() {
       return;
     }
   }
+}
+
+void MenuBarUI::onSearchTextChanged(const QString &text) {
+  emit searchResource(text);
 }

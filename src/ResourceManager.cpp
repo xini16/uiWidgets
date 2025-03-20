@@ -26,11 +26,6 @@ void ResourceManager::renameResource(Resource *resource,
   }
 }
 
-void ResourceManager::sortResources(const std::string &criteria,
-                                    const SortOrder &order) {
-  emit resourceUpdated();
-}
-
 void ResourceManager::removeParent(Resource *child) {
   assert(child);
   std::cout << "Child " << child->getName() << "@" << child

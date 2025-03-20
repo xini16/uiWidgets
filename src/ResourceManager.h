@@ -16,7 +16,6 @@ public slots:
                          const ResourceType type, std::size_t index);
   void deleteResource(Resource *resource);
   void renameResource(Resource *resource, const std::string &newName);
-  void sortResources(const std::string &criteria, const SortOrder &order);
   void insertChild(Resource *parent, Resource *child, std::size_t index);
   void removeParent(Resource *child);
   void createTestData();
