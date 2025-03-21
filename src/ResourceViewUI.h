@@ -44,12 +44,15 @@ private:
   void restoreExpandedStateFromTree(QTreeWidgetItem *item);
   void filterTreeItem(QTreeWidgetItem *item, const QString &searchText);
   void repaintPage();
+  Resource *copyResource(Resource *resource);
+
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
   std::optional<Resource *> selectedResource = {};
   std::unordered_map<Resource *, bool> expansionStateMap;
   std::optional<Resource *> clipboardResource = {};
+  // std::vector<QTreeWidgetItem *> originalItemOrder;
 };
 
 #endif // RESOURCEVIEWUI_H

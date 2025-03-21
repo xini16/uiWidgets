@@ -78,8 +78,10 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
   searchBox = new QLineEdit(this);
   searchBox->setPlaceholderText("Search...");
   layout->addWidget(searchBox);
-  connect(searchBox, &QLineEdit::textChanged, this,
-          &MenuBarUI::onSearchTextChanged);
+  connect(searchBox, &QLineEdit::editingFinished, this, [this]() {
+    QString text = searchBox->text();
+    this->onSearchTextChanged(text);
+  });
 
   renameButton = new QPushButton("Rename", this);
   connect(renameButton, &QPushButton::clicked, this,

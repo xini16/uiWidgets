@@ -35,6 +35,10 @@ void ResourceViewUI::updateView() {
   for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
     recordExpandedStateFromTree(resourceList->topLevelItem(i));
   }
+  // originalItemOrder.clear();
+  // for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
+  //   originalItemOrder.push_back(resourceList->topLevelItem(i));
+  // }
   repaintPage();
 }
 
@@ -159,8 +163,17 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     QAction *renameAction = contextMenu.addAction("Rename");
     QAction *cutAction = contextMenu.addAction("Cut");
 
-    connect(copyAction, &QAction::triggered, this,
-            [=]() { clipboardResource = clickedResource; });
+    connect(copyAction, &QAction::triggered, this, [=]() {
+      Resource *newResource =
+          new Resource(clickedResource->getName(), clickedResource->getType());
+      if (clickedResource->hasChildren()) {
+        for (Resource *child : clickedResource->getChildren()) {
+          Resource *copiedChild = copyResource(child);
+          newResource->addChild(copiedChild);
+        }
+      }
+      clipboardResource = newResource;
+    });
     connect(pasteAction, &QAction::triggered, this, [=]() {
       resourceManager->insertChild(clickedResource, clipboardResource.value(),
                                    clickedResource->getChildren().size());
@@ -198,33 +211,63 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     });
   } else {
     QTreeWidgetItem *clickedInsertPoint = resourceList->itemAt(pos);
-    ResourceTreeItem *parentItem =
-        dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
-    Resource *parent = parentItem->getResource();
-    int index = parentItem->indexOfChild(clickedInsertPoint) / 2;
-    QAction *pasteAction = contextMenu.addAction("Paste");
-    QAction *newAction = contextMenu.addAction("New");
-    QMenu *newSubMenu = new QMenu("Type", &contextMenu);
-    QAction *type1Action = newSubMenu->addAction("Type A");
-    QAction *type2Action = newSubMenu->addAction("Type B");
-    QAction *type3Action = newSubMenu->addAction("Type C");
-    newAction->setMenu(newSubMenu);
+    if (clickedInsertPoint) {
+      ResourceTreeItem *parentItem =
+          dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
+      Resource *parent = parentItem->getResource();
+      int index = parentItem->indexOfChild(clickedInsertPoint) / 2;
+      QAction *pasteAction = contextMenu.addAction("Paste");
+      QAction *newAction = contextMenu.addAction("New");
+      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+      QAction *type1Action = newSubMenu->addAction("Type A");
+      QAction *type2Action = newSubMenu->addAction("Type B");
+      QAction *type3Action = newSubMenu->addAction("Type C");
+      newAction->setMenu(newSubMenu);
 
-    connect(pasteAction, &QAction::triggered, this, [=]() {
-      resourceManager->insertChild(parent, clipboardResource.value(), index);
-    });
-    connect(type1Action, &QAction::triggered, this, [=]() {
-      resourceManager->insertNewResource(parent, "New Resource of Type A",
-                                         TypeA, index);
-    });
-    connect(type2Action, &QAction::triggered, this, [=]() {
-      resourceManager->insertNewResource(parent, "New Resource of Type B",
-                                         TypeB, index);
-    });
-    connect(type3Action, &QAction::triggered, this, [=]() {
-      resourceManager->insertNewResource(parent, "New Resource of Type C",
-                                         TypeC, index);
-    });
+      connect(pasteAction, &QAction::triggered, this, [=]() {
+        resourceManager->insertChild(parent, clipboardResource.value(), index);
+      });
+      connect(type1Action, &QAction::triggered, this, [=]() {
+        resourceManager->insertNewResource(parent, "New Resource of Type A",
+                                           TypeA, index);
+      });
+      connect(type2Action, &QAction::triggered, this, [=]() {
+        resourceManager->insertNewResource(parent, "New Resource of Type B",
+                                           TypeB, index);
+      });
+      connect(type3Action, &QAction::triggered, this, [=]() {
+        resourceManager->insertNewResource(parent, "New Resource of Type C",
+                                           TypeC, index);
+      });
+    } else {
+      QAction *pasteAction = contextMenu.addAction("Paste");
+      QAction *newAction = contextMenu.addAction("New");
+      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+      QAction *type1Action = newSubMenu->addAction("Type A");
+      QAction *type2Action = newSubMenu->addAction("Type B");
+      QAction *type3Action = newSubMenu->addAction("Type C");
+      newAction->setMenu(newSubMenu);
+
+      connect(pasteAction, &QAction::triggered, this, [=]() {
+        if (clipboardResource) {
+          resourceManager->insertChild(
+              resourceManager->getRoot(), clipboardResource.value(),
+              resourceManager->getRoot()->getChildren().size());
+        }
+      });
+      connect(type1Action, &QAction::triggered, this, [=]() {
+        resourceManager->addResource(resourceManager->getRoot(),
+                                     "New Resource of Type A", TypeA);
+      });
+      connect(type2Action, &QAction::triggered, this, [=]() {
+        resourceManager->addResource(resourceManager->getRoot(),
+                                     "New Resource of Type B", TypeB);
+      });
+      connect(type3Action, &QAction::triggered, this, [=]() {
+        resourceManager->addResource(resourceManager->getRoot(),
+                                     "New Resource of Type C", TypeC);
+      });
+    }
   }
 
   contextMenu.exec(resourceList->mapToGlobal(pos));
@@ -234,9 +277,7 @@ void ResourceViewUI::filterResources(const QString &searchText) {
   if (searchText.isEmpty())
     repaintPage();
   else {
-    for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
-      recordExpandedStateFromTree(resourceList->topLevelItem(i));
-    }
+    updateView();
     resourceList->expandAll();
     for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
       QTreeWidgetItem *item = resourceList->topLevelItem(i);
@@ -259,4 +300,41 @@ void ResourceViewUI::filterTreeItem(QTreeWidgetItem *item,
 }
 
 void ResourceViewUI::sortResources(const std::string &criteria,
-                                   const SortOrder &order) {}
+                                   const SortOrder &order) {
+  // if (order == None)
+  //   repaintPage();
+  // std::vector<Resource *> resources =
+  // resourceManager->getRoot()->getChildren();
+
+  // auto compareByName = [](Resource *a, Resource *b) {
+  //   return a->getName() < b->getName();
+  // };
+
+  // auto compareByTag = [](Resource *a, Resource *b) {
+  //   return a->getTag() < b->getTag();
+  // };
+
+  // if (criteria == "name") {
+  //   std::sort(resources.begin(), resources.end(), compareByName);
+  // } else if (criteria == "tag") {
+  //   std::sort(resources.begin(), resources.end(), compareByTag);
+  // } else {
+  //   assert(false);
+  // }
+
+  // if (order == Descending) {
+  //   std::reverse(resources.begin(), resources.end());
+  // }
+
+  // repaintPage();
+}
+
+Resource *ResourceViewUI::copyResource(Resource *resource) {
+  Resource *copiedResource =
+      new Resource(resource->getName(), resource->getType());
+  for (Resource *child : resource->getChildren()) {
+    Resource *copiedChild = copyResource(child);
+    copiedResource->addChild(copiedChild);
+  }
+  return copiedResource;
+}
