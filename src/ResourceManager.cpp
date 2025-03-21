@@ -26,11 +26,6 @@ void ResourceManager::renameResource(Resource *resource,
   }
 }
 
-void ResourceManager::sortResources(const std::string &criteria,
-                                    const SortOrder &order) {
-  emit resourceUpdated();
-}
-
 void ResourceManager::removeParent(Resource *child) {
   assert(child);
   std::cout << "Child " << child->getName() << "@" << child
@@ -57,6 +52,18 @@ void ResourceManager::insertNewResource(Resource *parent,
   assert(parent);
   Resource *newResource = new Resource(name, type);
   insertChild(parent, newResource, index);
+}
+
+Resource *ResourceManager::copyResource(Resource *resource) {
+  Resource *newResource =
+      new Resource(resource->getName(), resource->getType());
+  if (resource->hasChildren()) {
+    for (Resource *child : resource->getChildren()) {
+      Resource *copiedChild = copyResource(child);
+      newResource->addChild(copiedChild);
+    }
+  }
+  return newResource;
 }
 
 void ResourceManager::createTestData() {
