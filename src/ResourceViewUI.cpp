@@ -147,18 +147,17 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
   QMenu contextMenu;
   ResourceTreeItem *item =
       dynamic_cast<ResourceTreeItem *>(resourceList->itemAt(pos));
-
+  QAction *pasteAction = contextMenu.addAction("Paste");
+  QAction *newAction = contextMenu.addAction("New");
+  QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+  QAction *type1Action = newSubMenu->addAction("Type A");
+  QAction *type2Action = newSubMenu->addAction("Type B");
+  QAction *type3Action = newSubMenu->addAction("Type C");
+  newAction->setMenu(newSubMenu);
   if (item) {
     Resource *clickedResource = item->getResource();
     assert(clickedResource);
     QAction *copyAction = contextMenu.addAction("Copy");
-    QAction *pasteAction = contextMenu.addAction("Paste");
-    QAction *newAction = contextMenu.addAction("New");
-    QMenu *newSubMenu = new QMenu("Type", &contextMenu);
-    QAction *type1Action = newSubMenu->addAction("Type A");
-    QAction *type2Action = newSubMenu->addAction("Type B");
-    QAction *type3Action = newSubMenu->addAction("Type C");
-    newAction->setMenu(newSubMenu);
     QAction *deleteAction = contextMenu.addAction("Delete");
     QAction *renameAction = contextMenu.addAction("Rename");
     QAction *cutAction = contextMenu.addAction("Cut");
@@ -208,13 +207,6 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
           dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
       Resource *parent = parentItem->getResource();
       int index = parentItem->indexOfChild(clickedInsertPoint) / 2;
-      QAction *pasteAction = contextMenu.addAction("Paste");
-      QAction *newAction = contextMenu.addAction("New");
-      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
-      QAction *type1Action = newSubMenu->addAction("Type A");
-      QAction *type2Action = newSubMenu->addAction("Type B");
-      QAction *type3Action = newSubMenu->addAction("Type C");
-      newAction->setMenu(newSubMenu);
 
       connect(pasteAction, &QAction::triggered, this, [=]() {
         resourceManager->insertChild(parent, clipboardResource.value(), index);
@@ -232,14 +224,6 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
                                            TypeC, index);
       });
     } else {
-      QAction *pasteAction = contextMenu.addAction("Paste");
-      QAction *newAction = contextMenu.addAction("New");
-      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
-      QAction *type1Action = newSubMenu->addAction("Type A");
-      QAction *type2Action = newSubMenu->addAction("Type B");
-      QAction *type3Action = newSubMenu->addAction("Type C");
-      newAction->setMenu(newSubMenu);
-
       connect(pasteAction, &QAction::triggered, this, [=]() {
         if (clipboardResource) {
           resourceManager->insertChild(
