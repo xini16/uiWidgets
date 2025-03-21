@@ -164,15 +164,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     QAction *cutAction = contextMenu.addAction("Cut");
 
     connect(copyAction, &QAction::triggered, this, [=]() {
-      Resource *newResource =
-          new Resource(clickedResource->getName(), clickedResource->getType());
-      if (clickedResource->hasChildren()) {
-        for (Resource *child : clickedResource->getChildren()) {
-          Resource *copiedChild = copyResource(child);
-          newResource->addChild(copiedChild);
-        }
-      }
-      clipboardResource = newResource;
+      clipboardResource = resourceManager->copyResource(clickedResource);
     });
     connect(pasteAction, &QAction::triggered, this, [=]() {
       resourceManager->insertChild(clickedResource, clipboardResource.value(),
@@ -289,11 +281,9 @@ void ResourceViewUI::filterResources(const QString &searchText) {
 void ResourceViewUI::filterTreeItem(QTreeWidgetItem *item,
                                     const QString &searchText) {
   assert(item);
-  if (item->text(0).contains(searchText, Qt::CaseInsensitive)) {
-    item->setBackground(0, QBrush(Qt::yellow));
-  } else {
-    item->setForeground(0, QBrush(Qt::gray));
-  }
+  item->text(0).contains(searchText, Qt::CaseInsensitive)
+      ? item->setBackground(0, QBrush(Qt::yellow))
+      : item->setForeground(0, QBrush(Qt::gray));
   for (int i = 0; i < item->childCount(); ++i) {
     filterTreeItem(item->child(i), searchText);
   }
@@ -327,14 +317,4 @@ void ResourceViewUI::sortResources(const std::string &criteria,
   // }
 
   // repaintPage();
-}
-
-Resource *ResourceViewUI::copyResource(Resource *resource) {
-  Resource *copiedResource =
-      new Resource(resource->getName(), resource->getType());
-  for (Resource *child : resource->getChildren()) {
-    Resource *copiedChild = copyResource(child);
-    copiedResource->addChild(copiedChild);
-  }
-  return copiedResource;
 }

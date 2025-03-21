@@ -54,6 +54,18 @@ void ResourceManager::insertNewResource(Resource *parent,
   insertChild(parent, newResource, index);
 }
 
+Resource *ResourceManager::copyResource(Resource *resource) {
+  Resource *newResource =
+      new Resource(resource->getName(), resource->getType());
+  if (resource->hasChildren()) {
+    for (Resource *child : resource->getChildren()) {
+      Resource *copiedChild = copyResource(child);
+      newResource->addChild(copiedChild);
+    }
+  }
+  return newResource;
+}
+
 void ResourceManager::createTestData() {
   Resource *folder1 = new Resource("Folder A", TypeA);
   Resource *folder2 = new Resource("Folder B", TypeB);
