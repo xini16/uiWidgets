@@ -12,27 +12,29 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QWidget>
+#include <optional>
 #include <qtreewidget.h>
 
-class Resource;
-class ResourceManager;
+template <typename T> class Resource;
 
-class MenuBarUI : public QWidget {
+template <typename T> class ResourceManager;
+
+template <typename T> class MenuBarUI : public QWidget {
   Q_OBJECT
 
 public:
   explicit MenuBarUI(QWidget *parent = nullptr);
-  std::optional<Resource *> selectedResource = {};
+  std::optional<Resource<T> *> selectedResource = {};
   std::optional<QTreeWidgetItem *> selectedInsertPoint = {};
 
 signals:
-  void addResource(Resource *parent, const std::string &name,
+  void addResource(Resource<T> *parent, const std::string &name,
                    const ResourceType type);
-  void insertNewResource(Resource *parent, const std::string &name,
+  void insertNewResource(Resource<T> *parent, const std::string &name,
                          const ResourceType type, std::size_t index);
-  void renameResource(Resource *resource, const std::string &newName);
+  void renameResource(Resource<T> *resource, const std::string &newName);
   void sortResources(const std::string &criteria, const SortOrder &order);
-  void deleteResource(Resource *resource);
+  void deleteResource(Resource<T> *resource);
   void searchResource(const QString &searchText);
 
 public slots:

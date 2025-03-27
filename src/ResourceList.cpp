@@ -1,7 +1,8 @@
 #include "ResourceList.h"
 #include "ResourceTreeItem.h"
 
-ResourceList::ResourceList(QWidget *parent) : QTreeWidget(parent) {
+template <typename T>
+ResourceList<T>::ResourceList(QWidget *parent) : QTreeWidget(parent) {
   setAcceptDrops(true);
   setDragEnabled(true);
   setDropIndicatorShown(true);
@@ -12,11 +13,13 @@ ResourceList::ResourceList(QWidget *parent) : QTreeWidget(parent) {
   setDefaultDropAction(Qt::MoveAction);
 }
 
-void ResourceList::dragEnterEvent(QDragEnterEvent *event) {
+template <typename T>
+void ResourceList<T>::dragEnterEvent(QDragEnterEvent *event) {
   event->acceptProposedAction();
 }
 
-void ResourceList::dragMoveEvent(QDragMoveEvent *event) {
+template <typename T>
+void ResourceList<T>::dragMoveEvent(QDragMoveEvent *event) {
   static QTreeWidgetItem *previousHighlightedInsert = nullptr;
   static QTreeWidgetItem *previousHighlightedResource = nullptr;
 
@@ -44,10 +47,10 @@ void ResourceList::dragMoveEvent(QDragMoveEvent *event) {
   event->acceptProposedAction();
 }
 
-void ResourceList::dropEvent(QDropEvent *event) {
+template <typename T> void ResourceList<T>::dropEvent(QDropEvent *event) {
   QTreeWidgetItem *itemUnderCursor = itemAt(event->position().toPoint());
-  ResourceTreeItem *draggedItem =
-      dynamic_cast<ResourceTreeItem *>(currentItem());
+  ResourceTreeItem<T> *draggedItem =
+      dynamic_cast<ResourceTreeItem<T> *>(currentItem());
   assert(draggedItem);
 
   emit itemDropped(itemUnderCursor, draggedItem);

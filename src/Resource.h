@@ -4,33 +4,33 @@
 #include <string>
 #include <vector>
 
-class Resource {
+template <typename T> class Resource {
 public:
-  Resource(const std::string &name, ResourceType type);
+  Resource(const std::string &name, T *item);
   ~Resource();
   std::string getName() const;
   std::string getTag() const;
   std::vector<Resource *> getChildren() const;
   Resource *getParent() const;
-  ResourceType getType() const;
+  T *getItem() const;
   bool isFolder() const;
 
   void setName(const std::string &name);
   void setTag(const std::string &tag);
-  void setType(ResourceType type);
-  void setParent(Resource *newParent);
-  void addChild(Resource *child);
-  void removeChild(Resource *child);
+  void setItem(T *item);
+  void setParent(Resource<T> *newParent);
+  void addChild(Resource<T> *child);
+  void removeChild(Resource<T> *child);
   bool hasChildren() const;
-  void insertChild(Resource *child, std::size_t index);
+  void insertChild(Resource<T> *child, std::size_t index);
   void removeParent();
 
 private:
   std::string name;
   std::string tag;
-  Resource *parent = nullptr;
-  std::vector<Resource *> children = {};
-  ResourceType type;
+  Resource<T> *parent = nullptr;
+  std::vector<Resource<T> *> children = {};
+  T *item;
 };
 
 #endif // RESOURCE_H

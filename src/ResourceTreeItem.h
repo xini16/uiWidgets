@@ -4,18 +4,19 @@
 #include "Resource.h"
 #include <QTreeWidgetItem>
 
-class ResourceTreeItem : public QTreeWidgetItem {
+template <typename T> class ResourceTreeItem : public QTreeWidgetItem {
 public:
-  explicit ResourceTreeItem(Resource *resource, QTreeWidget *parent = nullptr)
+  explicit ResourceTreeItem(Resource<T> *resource,
+                            QTreeWidget *parent = nullptr)
       : QTreeWidgetItem(parent), resource(resource) {}
 
-  explicit ResourceTreeItem(Resource *resource, QTreeWidgetItem *parent)
+  explicit ResourceTreeItem(Resource<T> *resource, QTreeWidgetItem *parent)
       : QTreeWidgetItem(parent), resource(resource) {}
 
-  Resource *getResource() const { return resource; }
+  Resource<T> *getResource() const { return resource; }
 
 private:
-  Resource *resource;
+  Resource<T> *resource;
 };
 
 #endif // RESOURCETREEITEM_H

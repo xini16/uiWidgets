@@ -1,6 +1,7 @@
 #include "MenuBarUI.h"
 #include "ResourceManager.h"
 #include "ResourceViewUI.h"
+#include "fruit.h"
 #include <QApplication>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -8,38 +9,38 @@
 int main(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
-  ResourceManager resourceManager;
-  resourceManager.createTestData();
+  ResourceManager<Fruit> resourceManager;
+  // resourceManager.createTestData();
 
   QWidget mainWidget;
   QVBoxLayout *layout = new QVBoxLayout(&mainWidget);
 
-  ResourceViewUI *resourceView = new ResourceViewUI(&resourceManager);
-  MenuBarUI *menuBar = new MenuBarUI();
-
-  QObject::connect(menuBar, &MenuBarUI::addResource, &resourceManager,
-                   &ResourceManager::addResource);
-  QObject::connect(menuBar, &MenuBarUI::renameResource, &resourceManager,
-                   &ResourceManager::renameResource);
-  QObject::connect(menuBar, &MenuBarUI::sortResources, resourceView,
-                   &ResourceViewUI::sortResources);
-  QObject::connect(menuBar, &MenuBarUI::deleteResource, &resourceManager,
-                   &ResourceManager::deleteResource);
-  QObject::connect(menuBar, &MenuBarUI::insertNewResource, &resourceManager,
-                   &ResourceManager::insertNewResource);
-  QObject::connect(menuBar, &MenuBarUI::searchResource, resourceView,
-                   &ResourceViewUI::filterResources);
-  QObject::connect(resourceView, &ResourceViewUI::resourceSelected, menuBar,
-                   [=](Resource *resource) {
+  ResourceViewUI<Fruit> *resourceView =
+      new ResourceViewUI<Fruit>(&resourceManager);
+  MenuBarUI<Fruit> *menuBar = new MenuBarUI<Fruit>();
+  QObject::connect(menuBar, &MenuBarUI<Fruit>::addResource, &resourceManager,
+                   &ResourceManager<Fruit>::addResource);
+  QObject::connect(menuBar, &MenuBarUI<Fruit>::renameResource, &resourceManager,
+                   &ResourceManager<Fruit>::renameResource);
+  QObject::connect(menuBar, &MenuBarUI<Fruit>::sortResources, resourceView,
+                   &ResourceViewUI<Fruit>::sortResources);
+  QObject::connect(menuBar, &MenuBarUI<Fruit>::deleteResource, &resourceManager,
+                   &ResourceManager<Fruit>::deleteResource);
+  QObject::connect(menuBar, &MenuBarUI<Fruit>::insertNewResource,
+                   &resourceManager,
+                   &ResourceManager<Fruit>::insertNewResource);
+  QObject::connect(menuBar, &MenuBarUI<Fruit>::searchResource, resourceView,
+                   &ResourceViewUI<Fruit>::filterResources);
+  QObject::connect(resourceView, &ResourceViewUI<Fruit>::resourceSelected,
+                   menuBar, [=](Resource<Fruit> *resource) {
                      menuBar->selectedResource = resource;
                      menuBar->selectedInsertPoint.reset();
                    });
-  QObject::connect(resourceView, &ResourceViewUI::insertPointSelected, menuBar,
-                   [=](QTreeWidgetItem *insertPoint) {
+  QObject::connect(resourceView, &ResourceViewUI<Fruit>::insertPointSelected,
+                   menuBar, [=](QTreeWidgetItem *insertPoint) {
                      menuBar->selectedInsertPoint = insertPoint;
                      menuBar->selectedResource.reset();
                    });
-
   layout->addWidget(menuBar);
   layout->addWidget(resourceView);
 

@@ -10,8 +10,9 @@
 #include <qnamespace.h>
 #include <qtreewidget.h>
 
-ResourceViewUI::ResourceViewUI(ResourceManager *resourceManager,
-                               QWidget *parent)
+template <typename T>
+ResourceViewUI<T>::ResourceViewUI(ResourceManager<T> *resourceManager,
+                                  QWidget *parent)
     : QWidget(parent), resourceManager(resourceManager) {
   mainLayout = new QVBoxLayout(this);
 
@@ -19,38 +20,34 @@ ResourceViewUI::ResourceViewUI(ResourceManager *resourceManager,
 
   mainLayout->addWidget(resourceList);
   setLayout(mainLayout);
-  connect(resourceList, &ResourceList::customContextMenuRequested, this,
+  connect(resourceList, &ResourceList<T>::customContextMenuRequested, this,
           &ResourceViewUI::showContextMenu);
-  connect(resourceList, &ResourceList::itemClicked, this,
+  connect(resourceList, &ResourceList<T>::itemClicked, this,
           &ResourceViewUI::onItemSelected);
-  connect(resourceList, &ResourceList::itemDropped, this,
+  connect(resourceList, &ResourceList<T>::itemDropped, this,
           &ResourceViewUI::handleItemDrop);
-  connect(resourceManager, &ResourceManager::resourceUpdated, this,
+  connect(resourceManager, &ResourceManager<T>::resourceUpdated, this,
           &ResourceViewUI::updateView);
   updateView();
 }
 
-void ResourceViewUI::updateView() {
+template <typename T> void ResourceViewUI<T>::updateView() {
   expansionStateMap.clear();
   for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
     recordExpandedStateFromTree(resourceList->topLevelItem(i));
   }
-  // originalItemOrder.clear();
-  // for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
-  //   originalItemOrder.push_back(resourceList->topLevelItem(i));
-  // }
   repaintPage();
 }
 
-void ResourceViewUI::repaintPage() {
+template <typename T> void ResourceViewUI<T>::repaintPage() {
   resourceList->clear();
-  for (Resource *resource : resourceManager->getRoot()->getChildren()) {
+  for (Resource<T> *resource : resourceManager->getRoot()->getChildren()) {
     QTreeWidgetItem *insertBeforeItem = new QTreeWidgetItem(resourceList);
     insertBeforeItem->setFlags(insertBeforeItem->flags() |
                                Qt::ItemIsSelectable);
     insertBeforeItem->setSizeHint(0, QSize(0, 2));
     insertBeforeItem->setBackground(0, QBrush(Qt::gray));
-    ResourceTreeItem *item = new ResourceTreeItem(resource, resourceList);
+    ResourceTreeItem<T> *item = new ResourceTreeItem(resource, resourceList);
     item->setText(0, QString::fromStdString(resource->getName()));
     populateTree(item, resource);
   }
@@ -59,15 +56,16 @@ void ResourceViewUI::repaintPage() {
   }
 }
 
-void ResourceViewUI::populateTree(QTreeWidgetItem *parentItem,
-                                  Resource *resource) {
-  for (Resource *child : resource->getChildren()) {
+template <typename T>
+void ResourceViewUI<T>::populateTree(QTreeWidgetItem *parentItem,
+                                     Resource<T> *resource) {
+  for (Resource<T> *child : resource->getChildren()) {
     QTreeWidgetItem *insertBeforeItem = new QTreeWidgetItem(parentItem);
     insertBeforeItem->setFlags(insertBeforeItem->flags() |
                                Qt::ItemIsSelectable);
     insertBeforeItem->setSizeHint(0, QSize(0, 2));
     insertBeforeItem->setBackground(0, QBrush(Qt::gray));
-    ResourceTreeItem *childItem = new ResourceTreeItem(child, parentItem);
+    ResourceTreeItem<T> *childItem = new ResourceTreeItem(child, parentItem);
     childItem->setText(0, QString::fromStdString(child->getName()));
     parentItem->addChild(insertBeforeItem);
     parentItem->addChild(childItem);
@@ -76,11 +74,11 @@ void ResourceViewUI::populateTree(QTreeWidgetItem *parentItem,
   }
 }
 
-void ResourceViewUI::onItemSelected() {
-  ResourceTreeItem *item =
-      dynamic_cast<ResourceTreeItem *>(resourceList->currentItem());
+template <typename T> void ResourceViewUI<T>::onItemSelected() {
+  ResourceTreeItem<T> *item =
+      dynamic_cast<ResourceTreeItem<T> *>(resourceList->currentItem());
   if (item) {
-    Resource *selectedResource = item->getResource();
+    Resource<T> *selectedResource = item->getResource();
     assert(selectedResource);
     emit resourceSelected(selectedResource);
   } else {
@@ -88,25 +86,27 @@ void ResourceViewUI::onItemSelected() {
   }
 }
 
-void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
-                                    ResourceTreeItem *dragged) {
+template <typename T>
+void ResourceViewUI<T>::handleItemDrop(QTreeWidgetItem *target,
+                                       ResourceTreeItem<T> *dragged) {
   assert(target);
   assert(dragged);
-  Resource *draggedResource = dragged->getResource();
+  Resource<T> *draggedResource = dragged->getResource();
   assert(draggedResource);
   if (target->text(0).isEmpty()) {
-    ResourceTreeItem *parentItem =
-        dynamic_cast<ResourceTreeItem *>(target->parent());
-    Resource *parent = parentItem->getResource();
+    ResourceTreeItem<T> *parentItem =
+        dynamic_cast<ResourceTreeItem<T> *>(target->parent());
+    Resource<T> *parent = parentItem->getResource();
     int index = parentItem->indexOfChild(target) / 2;
     std::cout << "dragged resource has parent " << draggedResource->getParent()
               << std::endl;
     resourceManager->removeParent(draggedResource);
     resourceManager->insertChild(parent, draggedResource, index);
   } else {
-    ResourceTreeItem *targetResource = dynamic_cast<ResourceTreeItem *>(target);
+    ResourceTreeItem<T> *targetResource =
+        dynamic_cast<ResourceTreeItem<T> *>(target);
     assert(targetResource);
-    Resource *parent = targetResource->getResource();
+    Resource<T> *parent = targetResource->getResource();
     assert(parent);
     int index = parent->getChildren().size();
     resourceManager->removeParent(draggedResource);
@@ -115,10 +115,11 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
   updateView();
 }
 
-void ResourceViewUI::recordExpandedStateFromTree(QTreeWidgetItem *item) {
+template <typename T>
+void ResourceViewUI<T>::recordExpandedStateFromTree(QTreeWidgetItem *item) {
   if (!item)
     return;
-  ResourceTreeItem *rti = dynamic_cast<ResourceTreeItem *>(item);
+  ResourceTreeItem<T> *rti = dynamic_cast<ResourceTreeItem<T> *>(item);
   if (rti && rti->getResource()) {
     expansionStateMap[rti->getResource()] =
         resourceList->isExpanded(resourceList->indexFromItem(rti));
@@ -128,10 +129,11 @@ void ResourceViewUI::recordExpandedStateFromTree(QTreeWidgetItem *item) {
   }
 }
 
-void ResourceViewUI::restoreExpandedStateFromTree(QTreeWidgetItem *item) {
+template <typename T>
+void ResourceViewUI<T>::restoreExpandedStateFromTree(QTreeWidgetItem *item) {
   if (!item)
     return;
-  ResourceTreeItem *rti = dynamic_cast<ResourceTreeItem *>(item);
+  ResourceTreeItem<T> *rti = dynamic_cast<ResourceTreeItem<T> *>(item);
   if (rti && rti->getResource()) {
     if (expansionStateMap.find(rti->getResource()) != expansionStateMap.end() &&
         expansionStateMap[rti->getResource()]) {
@@ -143,10 +145,11 @@ void ResourceViewUI::restoreExpandedStateFromTree(QTreeWidgetItem *item) {
   }
 }
 
-void ResourceViewUI::showContextMenu(const QPoint &pos) {
+template <typename T>
+void ResourceViewUI<T>::showContextMenu(const QPoint &pos) {
   QMenu contextMenu;
-  ResourceTreeItem *item =
-      dynamic_cast<ResourceTreeItem *>(resourceList->itemAt(pos));
+  ResourceTreeItem<T> *item =
+      dynamic_cast<ResourceTreeItem<T> *>(resourceList->itemAt(pos));
   QAction *pasteAction = contextMenu.addAction("Paste");
   QAction *newAction = contextMenu.addAction("New");
   QMenu *newSubMenu = new QMenu("Type", &contextMenu);
@@ -155,7 +158,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
   QAction *type3Action = newSubMenu->addAction("Type C");
   newAction->setMenu(newSubMenu);
   if (item) {
-    Resource *clickedResource = item->getResource();
+    Resource<T> *clickedResource = item->getResource();
     assert(clickedResource);
     QAction *copyAction = contextMenu.addAction("Copy");
     QAction *deleteAction = contextMenu.addAction("Delete");
@@ -203,9 +206,9 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
   } else {
     QTreeWidgetItem *clickedInsertPoint = resourceList->itemAt(pos);
     if (clickedInsertPoint) {
-      ResourceTreeItem *parentItem =
-          dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
-      Resource *parent = parentItem->getResource();
+      ResourceTreeItem<T> *parentItem =
+          dynamic_cast<ResourceTreeItem<T> *>(clickedInsertPoint->parent());
+      Resource<T> *parent = parentItem->getResource();
       int index = parentItem->indexOfChild(clickedInsertPoint) / 2;
 
       connect(pasteAction, &QAction::triggered, this, [=]() {
@@ -249,7 +252,8 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
   contextMenu.exec(resourceList->mapToGlobal(pos));
 }
 
-void ResourceViewUI::filterResources(const QString &searchText) {
+template <typename T>
+void ResourceViewUI<T>::filterResources(const QString &searchText) {
   if (searchText.isEmpty())
     repaintPage();
   else {
@@ -262,8 +266,9 @@ void ResourceViewUI::filterResources(const QString &searchText) {
   }
 }
 
-void ResourceViewUI::filterTreeItem(QTreeWidgetItem *item,
-                                    const QString &searchText) {
+template <typename T>
+void ResourceViewUI<T>::filterTreeItem(QTreeWidgetItem *item,
+                                       const QString &searchText) {
   assert(item);
   item->text(0).contains(searchText, Qt::CaseInsensitive)
       ? item->setBackground(0, QBrush(Qt::yellow))
@@ -273,32 +278,49 @@ void ResourceViewUI::filterTreeItem(QTreeWidgetItem *item,
   }
 }
 
-void ResourceViewUI::sortResources(const std::string &criteria,
-                                   const SortOrder &order) {
-  // if (order == None)
-  //   repaintPage();
-  // std::vector<Resource *> resources =
-  // resourceManager->getRoot()->getChildren();
+template <typename T>
+void ResourceViewUI<T>::sortResources(const std::string &criteria,
+                                      const SortOrder &order) {
+  if (order == None) {
+    updateView();
+    return;
+  }
+  std::vector<Resource<T> *> resources =
+      resourceManager->getRoot()->getChildren();
+  if (criteria == "name") {
+    std::sort(resources.begin(), resources.end(),
+              [order](Resource<T> *a, Resource<T> *b) {
+                if (order == Ascending) {
+                  return a->getName() < b->getName();
+                } else if (order == Descending) {
+                  return a->getName() > b->getName();
+                }
+                return false;
+              });
+  } else if (criteria == "tag") {
+    std::sort(resources.begin(), resources.end(),
+              [order](Resource<T> *a, Resource<T> *b) {
+                if (order == Ascending) {
+                  return a->getTag() < b->getTag();
+                } else if (order == Descending) {
+                  return a->getTag() > b->getTag();
+                }
+                return false;
+              });
+  }
+  resourceList->clear();
+  for (Resource<T> *resource : resources) {
+    QTreeWidgetItem *insertBeforeItem = new QTreeWidgetItem(resourceList);
+    insertBeforeItem->setFlags(insertBeforeItem->flags() |
+                               Qt::ItemIsSelectable);
+    insertBeforeItem->setSizeHint(0, QSize(0, 2));
+    insertBeforeItem->setBackground(0, QBrush(Qt::gray));
 
-  // auto compareByName = [](Resource *a, Resource *b) {
-  //   return a->getName() < b->getName();
-  // };
-
-  // auto compareByTag = [](Resource *a, Resource *b) {
-  //   return a->getTag() < b->getTag();
-  // };
-
-  // if (criteria == "name") {
-  //   std::sort(resources.begin(), resources.end(), compareByName);
-  // } else if (criteria == "tag") {
-  //   std::sort(resources.begin(), resources.end(), compareByTag);
-  // } else {
-  //   assert(false);
-  // }
-
-  // if (order == Descending) {
-  //   std::reverse(resources.begin(), resources.end());
-  // }
-
-  // repaintPage();
+    ResourceTreeItem<T> *item = new ResourceTreeItem(resource, resourceList);
+    item->setText(0, QString::fromStdString(resource->getName()));
+    populateTree(item, resource);
+  }
+  for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
+    restoreExpandedStateFromTree(resourceList->topLevelItem(i));
+  }
 }

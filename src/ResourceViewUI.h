@@ -3,6 +3,7 @@
 
 #include "ResourceList.h"
 #include "ResourceTreeItem.h"
+#include "fruit.h"
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QMenu>
@@ -14,18 +15,18 @@
 #include <qtreewidget.h>
 #include <unordered_map>
 
-class Resource;
-class ResourceManager;
+template <typename T> class Resource;
+template <typename T> class ResourceManager;
 
-class ResourceViewUI : public QWidget {
+template <typename T> class ResourceViewUI : public QWidget {
   Q_OBJECT
 
 public:
-  explicit ResourceViewUI(ResourceManager *resourceManager,
+  explicit ResourceViewUI(ResourceManager<T> *resourceManager,
                           QWidget *parent = nullptr);
 
 signals:
-  void resourceSelected(Resource *resource);
+  void resourceSelected(Resource<T> *resource);
   void insertPointSelected(QTreeWidgetItem *insertPoint);
 
 public slots:
@@ -36,21 +37,20 @@ private slots:
   void updateView();
   void showContextMenu(const QPoint &pos);
   void onItemSelected();
-  void handleItemDrop(QTreeWidgetItem *target, ResourceTreeItem *dragged);
+  void handleItemDrop(QTreeWidgetItem *target, ResourceTreeItem<T> *dragged);
 
 private:
-  void populateTree(QTreeWidgetItem *parentItem, Resource *resource);
+  void populateTree(QTreeWidgetItem *parentItem, Resource<T> *resource);
   void recordExpandedStateFromTree(QTreeWidgetItem *item);
   void restoreExpandedStateFromTree(QTreeWidgetItem *item);
   void filterTreeItem(QTreeWidgetItem *item, const QString &searchText);
   void repaintPage();
-  ResourceManager *resourceManager;
+  ResourceManager<T> *resourceManager;
   QVBoxLayout *mainLayout;
-  ResourceList *resourceList;
-  std::optional<Resource *> selectedResource = {};
-  std::unordered_map<Resource *, bool> expansionStateMap;
-  std::optional<Resource *> clipboardResource = {};
-  // std::vector<QTreeWidgetItem *> originalItemOrder;
+  ResourceList<T> *resourceList;
+  std::optional<Resource<T> *> selectedResource = {};
+  std::unordered_map<Resource<T> *, bool> expansionStateMap;
+  std::optional<Resource<T> *> clipboardResource = {};
 };
 
 #endif // RESOURCEVIEWUI_H

@@ -1,6 +1,7 @@
 #include "MenuBarUI.h"
 
-MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
+template <typename T>
+MenuBarUI<T>::MenuBarUI(QWidget *parent) : QWidget(parent) {
   QHBoxLayout *layout = new QHBoxLayout(this);
 
   addButton = new QToolButton(this);
@@ -19,9 +20,9 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
         return;
       }
       if (selectedInsertPoint) {
-        ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+        ResourceTreeItem<T> *parentItem = dynamic_cast<ResourceTreeItem<T> *>(
             selectedInsertPoint.value()->parent());
-        Resource *parent = parentItem->getResource();
+        Resource<T> *parent = parentItem->getResource();
         int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
         emit insertNewResource(parent, "New Resource " + typeName, type, index);
         return;
@@ -39,9 +40,9 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
       return;
     }
     if (selectedInsertPoint) {
-      ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+      ResourceTreeItem<T> *parentItem = dynamic_cast<ResourceTreeItem<T> *>(
           selectedInsertPoint.value()->parent());
-      Resource *parent = parentItem->getResource();
+      Resource<T> *parent = parentItem->getResource();
       int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
       emit insertNewResource(parent, "New Resource ", lastAddedType, index);
       return;
@@ -85,11 +86,11 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
 
   renameButton = new QPushButton("Rename", this);
   connect(renameButton, &QPushButton::clicked, this,
-          &MenuBarUI::onRenameResource);
+          &MenuBarUI<T>::onRenameResource);
 
   deleteButton = new QPushButton("Delete", this);
   connect(deleteButton, &QPushButton::clicked, this,
-          &MenuBarUI::onDeleteResource);
+          &MenuBarUI<T>::onDeleteResource);
 
   layout->addWidget(addButton);
   layout->addWidget(sortButton);
@@ -98,7 +99,7 @@ MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
   setLayout(layout);
 }
 
-void MenuBarUI::sortbuttonClicked() {
+template <typename T> void MenuBarUI<T>::sortbuttonClicked() {
   switch (order) {
   case None:
     order = Ascending;
@@ -117,14 +118,14 @@ void MenuBarUI::sortbuttonClicked() {
   emit sortResources(criteria, order);
 }
 
-void MenuBarUI::onDeleteResource() {
+template <typename T> void MenuBarUI<T>::onDeleteResource() {
   if (selectedResource) {
     emit deleteResource(selectedResource.value());
     selectedResource = nullptr;
   }
 }
 
-void MenuBarUI::onRenameResource() {
+template <typename T> void MenuBarUI<T>::onRenameResource() {
   if (selectedResource) {
     bool inputFinished;
     QString newName = QInputDialog::getText(
@@ -141,6 +142,7 @@ void MenuBarUI::onRenameResource() {
   }
 }
 
-void MenuBarUI::onSearchTextChanged(const QString &text) {
+template <typename T>
+void MenuBarUI<T>::onSearchTextChanged(const QString &text) {
   emit searchResource(text);
 }
