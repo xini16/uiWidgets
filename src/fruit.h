@@ -4,6 +4,7 @@
 
 class Fruit {
 public:
+  Fruit() {} /* empty constructor for test data */
   Fruit(const std::string &name) : name(name) {}
   std::string getName() const { return name; }
 

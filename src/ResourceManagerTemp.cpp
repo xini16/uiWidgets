@@ -8,14 +8,14 @@ ResourceManagerTemp<T>::ResourceManagerTemp(ResourceManager *resourceManager)
     : resourceManager(resourceManager) {}
 
 template <class T> void ResourceManagerTemp<T>::createTestData() {
-  Resource *folder1 = new Resource("Folder A", new T("folder 1"));
-  Resource *folder2 = new Resource("Folder B", new T("folder 2"));
+  Resource *folder1 = new Resource("Folder A", new T());
+  Resource *folder2 = new Resource("Folder B", new T());
 
   resourceManager->getRoot()->addChild(folder1);
   resourceManager->getRoot()->addChild(folder2);
 
-  Resource *file1 = new Resource("File A1", new T("apple"));
-  Resource *file2 = new Resource("File B1", new T("pear"));
+  Resource *file1 = new Resource("File A1", new T());
+  Resource *file2 = new Resource("File B1", new T());
 
   folder1->addChild(file1);
   folder2->addChild(file2);

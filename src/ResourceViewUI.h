@@ -10,7 +10,6 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <algorithm>
 #include <qtreewidget.h>
 #include <unordered_map>
 
