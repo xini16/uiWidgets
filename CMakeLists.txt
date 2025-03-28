@@ -15,6 +15,8 @@ set(Boost_INCLUDE_DIR "/usr/include")
 find_package(Boost REQUIRED)
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
-add_executable(ui src/main.cpp src/ResourceViewUI.cpp src/ResourceManager.cpp src/Resource.cpp src/MenuBarUI.cpp src/ResourceList.cpp)
+file(GLOB SOURCES "src/*.cpp" "src/*.h")
+
+add_executable(ui  ${SOURCES})
 
 target_link_libraries(ui Qt6::Widgets)

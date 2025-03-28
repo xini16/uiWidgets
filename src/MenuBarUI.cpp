@@ -1,50 +1,49 @@
 #include "MenuBarUI.h"
 
-template <typename T>
-MenuBarUI<T>::MenuBarUI(QWidget *parent) : QWidget(parent) {
+MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
   QHBoxLayout *layout = new QHBoxLayout(this);
 
   addButton = new QToolButton(this);
   addButton->setText("Add");
   addMenu = new QMenu(this);
-  for (const auto &entry : resourceType.left) {
-    ResourceType type = entry.first;
-    std::string typeName = entry.second;
-    QAction *action = addMenu->addAction(QString::fromStdString(typeName));
+  // for (const auto &entry : resourceType.left) {
+  //   ResourceType type = entry.first;
+  //   std::string typeName = entry.second;
+  //   QAction *action = addMenu->addAction(QString::fromStdString(typeName));
 
-    connect(action, &QAction::triggered, this, [=]() {
-      lastAddedType = type;
-      if (selectedResource) {
-        emit addResource(selectedResource.value(), "New Resource " + typeName,
-                         type);
-        return;
-      }
-      if (selectedInsertPoint) {
-        ResourceTreeItem<T> *parentItem = dynamic_cast<ResourceTreeItem<T> *>(
-            selectedInsertPoint.value()->parent());
-        Resource<T> *parent = parentItem->getResource();
-        int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
-        emit insertNewResource(parent, "New Resource " + typeName, type, index);
-        return;
-      }
-      assert(false);
-    });
-  }
+  //   connect(action, &QAction::triggered, this, [=]() {
+  //     lastAddedType = type;
+  //     if (selectedResource) {
+  //       emit addResource(selectedResource.value(), "New Resource " +
+  //       typeName,
+  //                        nullptr);
+  //       return;
+  //     }
+  //     if (selectedInsertPoint) {
+  //       ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+  //           selectedInsertPoint.value()->parent());
+  //       Resource *parent = parentItem->getResource();
+  //       int index = parentItem->indexOfChild(selectedInsertPoint.value()) /
+  //       2; emit insertNewResource(parent, "New Resource " + typeName, type,
+  //       index); return;
+  //     }
+  //     assert(false);
+  //   });
+  // }
 
   addButton->setMenu(addMenu);
   addButton->setPopupMode(QToolButton::MenuButtonPopup);
   connect(addButton, &QToolButton::clicked, this, [=]() {
     if (selectedResource) {
-      emit addResource(selectedResource.value(), "New Resource ",
-                       lastAddedType);
+      emit addResource(selectedResource.value(), "New Resource ", nullptr);
       return;
     }
     if (selectedInsertPoint) {
-      ResourceTreeItem<T> *parentItem = dynamic_cast<ResourceTreeItem<T> *>(
+      ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
           selectedInsertPoint.value()->parent());
-      Resource<T> *parent = parentItem->getResource();
+      Resource *parent = parentItem->getResource();
       int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
-      emit insertNewResource(parent, "New Resource ", lastAddedType, index);
+      emit insertNewResource(parent, "New Resource ", nullptr, index);
       return;
     }
     assert(false);
@@ -86,11 +85,11 @@ MenuBarUI<T>::MenuBarUI(QWidget *parent) : QWidget(parent) {
 
   renameButton = new QPushButton("Rename", this);
   connect(renameButton, &QPushButton::clicked, this,
-          &MenuBarUI<T>::onRenameResource);
+          &MenuBarUI::onRenameResource);
 
   deleteButton = new QPushButton("Delete", this);
   connect(deleteButton, &QPushButton::clicked, this,
-          &MenuBarUI<T>::onDeleteResource);
+          &MenuBarUI::onDeleteResource);
 
   layout->addWidget(addButton);
   layout->addWidget(sortButton);
@@ -99,7 +98,7 @@ MenuBarUI<T>::MenuBarUI(QWidget *parent) : QWidget(parent) {
   setLayout(layout);
 }
 
-template <typename T> void MenuBarUI<T>::sortbuttonClicked() {
+void MenuBarUI::sortbuttonClicked() {
   switch (order) {
   case None:
     order = Ascending;
@@ -118,14 +117,14 @@ template <typename T> void MenuBarUI<T>::sortbuttonClicked() {
   emit sortResources(criteria, order);
 }
 
-template <typename T> void MenuBarUI<T>::onDeleteResource() {
+void MenuBarUI::onDeleteResource() {
   if (selectedResource) {
     emit deleteResource(selectedResource.value());
     selectedResource = nullptr;
   }
 }
 
-template <typename T> void MenuBarUI<T>::onRenameResource() {
+void MenuBarUI::onRenameResource() {
   if (selectedResource) {
     bool inputFinished;
     QString newName = QInputDialog::getText(
@@ -142,7 +141,6 @@ template <typename T> void MenuBarUI<T>::onRenameResource() {
   }
 }
 
-template <typename T>
-void MenuBarUI<T>::onSearchTextChanged(const QString &text) {
+void MenuBarUI::onSearchTextChanged(const QString &text) {
   emit searchResource(text);
 }

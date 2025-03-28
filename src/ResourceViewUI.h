@@ -3,7 +3,6 @@
 
 #include "ResourceList.h"
 #include "ResourceTreeItem.h"
-#include "fruit.h"
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QMenu>
@@ -15,18 +14,17 @@
 #include <qtreewidget.h>
 #include <unordered_map>
 
-template <typename T> class Resource;
-template <typename T> class ResourceManager;
-
-template <typename T> class ResourceViewUI : public QWidget {
+class Resource;
+class ResourceManager;
+class ResourceViewUI : public QWidget {
   Q_OBJECT
 
 public:
-  explicit ResourceViewUI(ResourceManager<T> *resourceManager,
+  explicit ResourceViewUI(ResourceManager *resourceManager,
                           QWidget *parent = nullptr);
 
 signals:
-  void resourceSelected(Resource<T> *resource);
+  void resourceSelected(Resource *resource);
   void insertPointSelected(QTreeWidgetItem *insertPoint);
 
 public slots:
@@ -37,20 +35,20 @@ private slots:
   void updateView();
   void showContextMenu(const QPoint &pos);
   void onItemSelected();
-  void handleItemDrop(QTreeWidgetItem *target, ResourceTreeItem<T> *dragged);
+  void handleItemDrop(QTreeWidgetItem *target, ResourceTreeItem *dragged);
 
 private:
-  void populateTree(QTreeWidgetItem *parentItem, Resource<T> *resource);
+  void populateTree(QTreeWidgetItem *parentItem, Resource *resource);
   void recordExpandedStateFromTree(QTreeWidgetItem *item);
   void restoreExpandedStateFromTree(QTreeWidgetItem *item);
   void filterTreeItem(QTreeWidgetItem *item, const QString &searchText);
   void repaintPage();
-  ResourceManager<T> *resourceManager;
+  ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
-  ResourceList<T> *resourceList;
-  std::optional<Resource<T> *> selectedResource = {};
-  std::unordered_map<Resource<T> *, bool> expansionStateMap;
-  std::optional<Resource<T> *> clipboardResource = {};
+  ResourceList *resourceList;
+  std::optional<Resource *> selectedResource = {};
+  std::unordered_map<Resource *, bool> expansionStateMap;
+  std::optional<Resource *> clipboardResource = {};
 };
 
 #endif // RESOURCEVIEWUI_H

@@ -1,6 +1,5 @@
 #ifndef FRUIT_H
 #define FRUIT_H
-
 #include <string>
 
 class Fruit {

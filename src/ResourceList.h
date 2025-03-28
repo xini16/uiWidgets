@@ -7,14 +7,14 @@
 #include <QDropEvent>
 #include <QTreeWidget>
 
-template <typename T> class ResourceList : public QTreeWidget {
+class ResourceList : public QTreeWidget {
   Q_OBJECT
 
 public:
   explicit ResourceList(QWidget *parent = nullptr);
 
 signals:
-  void itemDropped(QTreeWidgetItem *target, ResourceTreeItem<T> *dragged);
+  void itemDropped(QTreeWidgetItem *target, ResourceTreeItem *dragged);
 
 protected:
   void dragEnterEvent(QDragEnterEvent *event) override;

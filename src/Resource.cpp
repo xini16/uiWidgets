@@ -3,56 +3,42 @@
 #include <cassert>
 #include <iostream>
 
-template <typename T>
-Resource<T>::Resource(const std::string &name, T *item)
+Resource::Resource(const std::string &name, void *item)
     : name(name), item(item), parent(nullptr) {}
 
-template <typename T> Resource<T>::~Resource() {
+Resource::~Resource() {
   for (Resource *child : children) {
     delete child;
   }
 }
 
-template <typename T> std::string Resource<T>::getName() const { return name; }
+std::string Resource::getName() const { return name; }
 
-template <typename T> std::string Resource<T>::getTag() const { return tag; }
+std::string Resource::getTag() const { return tag; }
 
-template <typename T> T *Resource<T>::getItem() const { return item; }
+void *Resource::getItem() const { return item; }
 
-template <typename T>
-std::vector<Resource<T> *> Resource<T>::getChildren() const {
-  return children;
-}
+std::vector<Resource *> Resource::getChildren() const { return children; }
 
-template <typename T> Resource<T> *Resource<T>::getParent() const {
-  return parent;
-}
+Resource *Resource::getParent() const { return parent; }
 
-template <typename T> void Resource<T>::setParent(Resource<T> *newParent) {
-  parent = newParent;
-}
+void Resource::setParent(Resource *newParent) { parent = newParent; }
 
-template <typename T> bool Resource<T>::isFolder() const {
-  return !children.empty();
-}
+bool Resource::isFolder() const { return !children.empty(); }
 
-template <typename T> void Resource<T>::setName(const std::string &name) {
-  this->name = name;
-}
+void Resource::setName(const std::string &name) { this->name = name; }
 
-template <typename T> void Resource<T>::setTag(const std::string &tag) {
-  this->tag = tag;
-}
+void Resource::setTag(const std::string &tag) { this->tag = tag; }
 
-template <typename T> void Resource<T>::setItem(T *item) { this->item = item; }
+void Resource::setItem(void *item) { this->item = item; }
 
-template <typename T> void Resource<T>::addChild(Resource<T> *child) {
+void Resource::addChild(Resource *child) {
   assert(child->getParent() == nullptr);
   children.push_back(child);
   child->setParent(this);
 }
 
-template <typename T> void Resource<T>::removeChild(Resource<T> *child) {
+void Resource::removeChild(Resource *child) {
   assert(child);
   assert(child->getParent() == this);
   children.erase(std::remove(children.begin(), children.end(), child),
@@ -60,19 +46,16 @@ template <typename T> void Resource<T>::removeChild(Resource<T> *child) {
   child->setParent(nullptr);
 }
 
-template <typename T> bool Resource<T>::hasChildren() const {
-  return !children.empty();
-}
+bool Resource::hasChildren() const { return !children.empty(); }
 
-template <typename T>
-void Resource<T>::insertChild(Resource<T> *child, std::size_t index) {
+void Resource::insertChild(Resource *child, std::size_t index) {
   assert(child);
   assert(!child->getParent());
   children.insert(children.begin() + index, child);
   child->setParent(this);
 }
 
-template <typename T> void Resource<T>::removeParent() {
+void Resource::removeParent() {
   std::cout << "Resource::removeParent()" << std::endl;
   parent->removeChild(this);
 }
