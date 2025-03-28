@@ -29,4 +29,8 @@ template <class T> void ResourceManagerTemp<T>::createTestData() {
   emit resourceManager->resourceUpdated();
 }
 
+template <class T> T *ResourceManagerTemp<T>::getItem(Resource *resource) {
+  return reinterpret_cast<T *>(resource->getItem());
+}
+
 template class ResourceManagerTemp<Fruit>;
