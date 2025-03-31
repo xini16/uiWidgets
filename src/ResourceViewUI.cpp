@@ -174,13 +174,12 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
                                      map.at(static_cast<int>(fruitType))());
       });
     }
-    connect(copyAction, &QAction::triggered, this,
-            [=]() { clipboardResource = clickedResource; });
+    connect(copyAction, &QAction::triggered, this, [=]() {
+      clipboardResource = resourceManager->copyResource(clickedResource);
+    });
     connect(pasteAction, &QAction::triggered, this, [=]() {
-      resourceManager->insertNewResource(clickedResource,
-                                         clipboardResource.value()->getName(),
-                                         clipboardResource.value()->getItem(),
-                                         clickedResource->getChildren().size());
+      resourceManager->insertChild(clickedResource, clipboardResource.value(),
+                                   clickedResource->getChildren().size());
     });
 
     connect(deleteAction, &QAction::triggered, this,
@@ -211,9 +210,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       int index = parentItem->indexOfChild(clickedInsertPoint) / 2;
 
       connect(pasteAction, &QAction::triggered, this, [=]() {
-        resourceManager->insertNewResource(
-            parent, clipboardResource.value()->getName(),
-            clipboardResource.value()->getItem(), index);
+        resourceManager->insertChild(parent, clipboardResource.value(), index);
       });
 
       for (const auto &entry : fruitTypeBimap.left) {
@@ -230,9 +227,8 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     } else {
       connect(pasteAction, &QAction::triggered, this, [=]() {
         if (clipboardResource) {
-          resourceManager->insertNewResource(
-              resourceManager->getRoot(), clipboardResource.value()->getName(),
-              clipboardResource.value()->getItem(),
+          resourceManager->insertChild(
+              resourceManager->getRoot(), clipboardResource.value(),
               resourceManager->getRoot()->getChildren().size());
         }
       });
@@ -333,9 +329,8 @@ void ResourceViewUI::setupShortcuts() {
       return;
     else {
       if (selectedResource) {
-        resourceManager->insertNewResource(
-            selectedResource.value(), clipboardResource.value()->getName(),
-            clipboardResource.value()->getItem(),
+        resourceManager->insertChild(
+            selectedResource.value(), clipboardResource.value(),
             selectedResource.value()->getChildren().size());
       } else {
         ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
@@ -348,9 +343,7 @@ void ResourceViewUI::setupShortcuts() {
                 : resourceList->indexOfTopLevelItem(
                       resourceList->currentItem()) /
                       2;
-        resourceManager->insertNewResource(
-            parent, clipboardResource.value()->getName(),
-            clipboardResource.value()->getItem(), index);
+        resourceManager->insertChild(parent, clipboardResource.value(), index);
       }
     }
   });
