@@ -1,54 +1,54 @@
 #include "MenuBarUI.h"
+#include "ResourceManager.h"
+#include <iostream>
 
-MenuBarUI::MenuBarUI(QWidget *parent) : QWidget(parent) {
+MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
+                     std::unordered_map<int, std::function<void *()>> map,
+                     QWidget *parent)
+    : QWidget(parent), map(map), resourceManager(resourceManager) {
   QHBoxLayout *layout = new QHBoxLayout(this);
 
-  addButton = new QToolButton(this);
+  addButton = new QPushButton(this);
   addButton->setText("Add");
   addMenu = new QMenu(this);
-  // for (const auto &entry : resourceType.left) {
-  //   ResourceType type = entry.first;
-  //   std::string typeName = entry.second;
-  //   QAction *action = addMenu->addAction(QString::fromStdString(typeName));
+  for (const auto &entry : fruitTypeBimap.left) {
+    FruitType fruitType = entry.first;
+    std::string fruitName = entry.second;
+    QAction *action = addMenu->addAction(QString::fromStdString(fruitName));
 
-  //   connect(action, &QAction::triggered, this, [=]() {
-  //     lastAddedType = type;
-  //     if (selectedResource) {
-  //       emit addResource(selectedResource.value(), "New Resource " +
-  //       typeName,
-  //                        nullptr);
-  //       return;
-  //     }
-  //     if (selectedInsertPoint) {
-  //       ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
-  //           selectedInsertPoint.value()->parent());
-  //       Resource *parent = parentItem->getResource();
-  //       int index = parentItem->indexOfChild(selectedInsertPoint.value()) /
-  //       2; emit insertNewResource(parent, "New Resource " + typeName, type,
-  //       index); return;
-  //     }
-  //     assert(false);
-  //   });
-  // }
-
-  addButton->setMenu(addMenu);
-  addButton->setPopupMode(QToolButton::MenuButtonPopup);
-  connect(addButton, &QToolButton::clicked, this, [=]() {
-    if (selectedResource) {
-      emit addResource(selectedResource.value(), "New Resource ", nullptr);
-      return;
-    }
-    if (selectedInsertPoint) {
-      ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
-          selectedInsertPoint.value()->parent());
-      Resource *parent = parentItem->getResource();
-      int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
-      emit insertNewResource(parent, "New Resource ", nullptr, index);
-      return;
-    }
-    assert(false);
+    connect(action, &QAction::triggered, this, [=]() {
+      if (selectedResource) {
+        emit addResource(selectedResource.value(), "New Resource " + fruitName,
+                         map.at(static_cast<int>(fruitType))());
+        return;
+      } else if (selectedInsertPoint) {
+        ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+            selectedInsertPoint.value()->parent());
+        if (parentItem) {
+          int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
+          Resource *parent = parentItem->getResource();
+          emit insertNewResource(parent, "New Resource " + fruitName,
+                                 map.at(static_cast<int>(fruitType))(), index);
+          return;
+        } else {
+          int index = indexOfTopLevel;
+          emit insertNewResource(resourceManager->getRoot(),
+                                 "New Resource " + fruitName,
+                                 map.at(static_cast<int>(fruitType))(), index);
+          return;
+        }
+      } else {
+        emit addResource(resourceManager->getRoot(),
+                         "New Resource " + fruitName,
+                         map.at(static_cast<int>(fruitType))());
+        return;
+      }
+      assert(false);
+    });
+  }
+  connect(addButton, &QPushButton::clicked, this, [=]() {
+    addMenu->exec(addButton->mapToGlobal(QPoint(0, addButton->height())));
   });
-
   QMenu *sortHoverMenu = new QMenu(this);
   QActionGroup *sortGroup = new QActionGroup(this);
   sortGroup->setExclusive(true);

@@ -10,9 +10,10 @@
 #include <qnamespace.h>
 #include <qtreewidget.h>
 
-ResourceViewUI::ResourceViewUI(ResourceManager *resourceManager,
-                               QWidget *parent)
-    : QWidget(parent), resourceManager(resourceManager) {
+ResourceViewUI::ResourceViewUI(
+    ResourceManager *resourceManager,
+    std::unordered_map<int, std::function<void *()>> map, QWidget *parent)
+    : QWidget(parent), resourceManager(resourceManager), map(map) {
   mainLayout = new QVBoxLayout(this);
 
   resourceList = new ResourceList(this);
@@ -80,7 +81,9 @@ void ResourceViewUI::onItemSelected() {
     assert(selectedResource);
     emit resourceSelected(selectedResource);
   } else {
-    emit insertPointSelected(resourceList->currentItem());
+    emit insertPointSelected(
+        resourceList->currentItem(),
+        resourceList->indexOfTopLevelItem(resourceList->currentItem()) / 2);
   }
 }
 
@@ -146,9 +149,6 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
   QAction *pasteAction = contextMenu.addAction("Paste");
   QAction *newAction = contextMenu.addAction("New");
   QMenu *newSubMenu = new QMenu("Type", &contextMenu);
-  QAction *type1Action = newSubMenu->addAction("Type A");
-  QAction *type2Action = newSubMenu->addAction("Type B");
-  QAction *type3Action = newSubMenu->addAction("Type C");
   newAction->setMenu(newSubMenu);
   if (item) {
     Resource *clickedResource = item->getResource();
@@ -157,7 +157,17 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     QAction *deleteAction = contextMenu.addAction("Delete");
     QAction *renameAction = contextMenu.addAction("Rename");
     QAction *cutAction = contextMenu.addAction("Cut");
-
+    for (const auto &entry : fruitTypeBimap.left) {
+      FruitType fruitType = entry.first;
+      std::string fruitName = entry.second;
+      QAction *action =
+          newSubMenu->addAction(QString::fromStdString(fruitName));
+      connect(action, &QAction::triggered, this, [=]() {
+        resourceManager->addResource(clickedResource,
+                                     "New Resource " + fruitName,
+                                     map.at(static_cast<int>(fruitType))());
+      });
+    }
     connect(copyAction, &QAction::triggered, this, [=]() {
       clipboardResource = resourceManager->copyResource(clickedResource);
     });
@@ -165,18 +175,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       resourceManager->insertChild(clickedResource, clipboardResource.value(),
                                    clickedResource->getChildren().size());
     });
-    connect(type1Action, &QAction::triggered, this, [=]() {
-      resourceManager->addResource(clickedResource, "New Resource of Type A",
-                                   nullptr);
-    });
-    connect(type2Action, &QAction::triggered, this, [=]() {
-      resourceManager->addResource(clickedResource, "New Resource of Type B",
-                                   nullptr);
-    });
-    connect(type3Action, &QAction::triggered, this, [=]() {
-      resourceManager->addResource(clickedResource, "New Resource of Type C",
-                                   nullptr);
-    });
+
     connect(deleteAction, &QAction::triggered, this,
             [=]() { resourceManager->deleteResource(clickedResource); });
     connect(renameAction, &QAction::triggered, this, [=]() {
@@ -207,18 +206,18 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       connect(pasteAction, &QAction::triggered, this, [=]() {
         resourceManager->insertChild(parent, clipboardResource.value(), index);
       });
-      connect(type1Action, &QAction::triggered, this, [=]() {
-        resourceManager->insertNewResource(parent, "New Resource of Type A",
-                                           nullptr, index);
-      });
-      connect(type2Action, &QAction::triggered, this, [=]() {
-        resourceManager->insertNewResource(parent, "New Resource of Type B",
-                                           nullptr, index);
-      });
-      connect(type3Action, &QAction::triggered, this, [=]() {
-        resourceManager->insertNewResource(parent, "New Resource of Type C",
-                                           nullptr, index);
-      });
+
+      for (const auto &entry : fruitTypeBimap.left) {
+        FruitType fruitType = entry.first;
+        std::string fruitName = entry.second;
+        QAction *action =
+            newSubMenu->addAction(QString::fromStdString(fruitName));
+        connect(action, &QAction::triggered, this, [=]() {
+          resourceManager->insertNewResource(
+              parent, "New Resource " + fruitName,
+              map.at(static_cast<int>(fruitType))(), index);
+        });
+      }
     } else {
       connect(pasteAction, &QAction::triggered, this, [=]() {
         if (clipboardResource) {
@@ -227,21 +226,19 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
               resourceManager->getRoot()->getChildren().size());
         }
       });
-      connect(type1Action, &QAction::triggered, this, [=]() {
-        resourceManager->addResource(resourceManager->getRoot(),
-                                     "New Resource of Type A", nullptr);
-      });
-      connect(type2Action, &QAction::triggered, this, [=]() {
-        resourceManager->addResource(resourceManager->getRoot(),
-                                     "New Resource of Type B", nullptr);
-      });
-      connect(type3Action, &QAction::triggered, this, [=]() {
-        resourceManager->addResource(resourceManager->getRoot(),
-                                     "New Resource of Type C", nullptr);
-      });
+      for (const auto &entry : fruitTypeBimap.left) {
+        FruitType fruitType = entry.first;
+        std::string fruitName = entry.second;
+        QAction *action =
+            newSubMenu->addAction(QString::fromStdString(fruitName));
+        connect(action, &QAction::triggered, this, [=]() {
+          resourceManager->addResource(resourceManager->getRoot(),
+                                       "New Resource " + fruitName,
+                                       map.at(static_cast<int>(fruitType))());
+        });
+      }
     }
   }
-
   contextMenu.exec(resourceList->mapToGlobal(pos));
 }
 

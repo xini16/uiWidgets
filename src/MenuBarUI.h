@@ -2,7 +2,7 @@
 #define MENUBARUI_H
 
 #include "ResourceViewUI.h"
-#include "types.h"
+#include "fruitExample.h"
 #include <QActionGroup>
 #include <QHBoxLayout>
 #include <QInputDialog>
@@ -22,9 +22,12 @@ class MenuBarUI : public QWidget {
   Q_OBJECT
 
 public:
-  explicit MenuBarUI(QWidget *parent = nullptr);
+  explicit MenuBarUI(ResourceManager *resourceManager,
+                     std::unordered_map<int, std::function<void *()>> map = {},
+                     QWidget *parent = nullptr);
   std::optional<Resource *> selectedResource = {};
   std::optional<QTreeWidgetItem *> selectedInsertPoint = {};
+  int indexOfTopLevel;
 
 signals:
   void addResource(Resource *parent, const std::string &name, void *item);
@@ -41,7 +44,9 @@ public slots:
   void onSearchTextChanged(const QString &text);
 
 private:
-  QToolButton *addButton;
+  ResourceManager *resourceManager;
+  std::unordered_map<int, std::function<void *()>> map;
+  QPushButton *addButton;
   QToolButton *sortButton;
   std::string criteria = "name";
   void sortbuttonClicked();
