@@ -27,7 +27,7 @@ public:
                      QWidget *parent = nullptr);
   std::optional<Resource *> selectedResource = {};
   std::optional<QTreeWidgetItem *> selectedInsertPoint = {};
-  int indexOfTopLevel;
+  int indexOfTopLevel = 0;
 
 signals:
   void addResource(Resource *parent, const std::string &name, void *item);
@@ -44,17 +44,17 @@ public slots:
   void onSearchTextChanged(const QString &text);
 
 private:
-  ResourceManager *resourceManager;
-  std::unordered_map<int, std::function<void *()>> map;
-  QPushButton *addButton;
-  QToolButton *sortButton;
+  ResourceManager *resourceManager = nullptr;
+  std::unordered_map<int, std::function<void *()>> map = {};
+  QPushButton *addButton = nullptr;
+  QToolButton *sortButton = nullptr;
   std::string criteria = "name";
   void sortbuttonClicked();
   SortOrder order = None;
-  QLineEdit *searchBox;
-  QPushButton *renameButton;
-  QPushButton *deleteButton;
-  QMenu *addMenu;
+  QLineEdit *searchBox = nullptr;
+  QPushButton *renameButton = nullptr;
+  QPushButton *deleteButton = nullptr;
+  QMenu *addMenu = nullptr;
 };
 
 #endif // MENUBARUI_H

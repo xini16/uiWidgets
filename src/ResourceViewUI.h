@@ -21,7 +21,7 @@ class ResourceViewUI : public QWidget {
 
 public:
   explicit ResourceViewUI(
-      ResourceManager *resourceManager,
+      ResourceManager *resourceManager = nullptr,
       std::unordered_map<int, std::function<void *()>> map = {},
       QWidget *parent = nullptr);
 

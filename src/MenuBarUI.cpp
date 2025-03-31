@@ -24,19 +24,15 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
       } else if (selectedInsertPoint) {
         ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
             selectedInsertPoint.value()->parent());
-        if (parentItem) {
-          int index = parentItem->indexOfChild(selectedInsertPoint.value()) / 2;
-          Resource *parent = parentItem->getResource();
-          emit insertNewResource(parent, "New Resource " + fruitName,
-                                 map.at(static_cast<int>(fruitType))(), index);
-          return;
-        } else {
-          int index = indexOfTopLevel;
-          emit insertNewResource(resourceManager->getRoot(),
-                                 "New Resource " + fruitName,
-                                 map.at(static_cast<int>(fruitType))(), index);
-          return;
-        }
+        Resource *parent =
+            parentItem ? parentItem->getResource() : resourceManager->getRoot();
+        int index =
+            parentItem
+                ? parentItem->indexOfChild(selectedInsertPoint.value()) / 2
+                : indexOfTopLevel;
+        emit insertNewResource(parent, "New Resource " + fruitName,
+                               map.at(static_cast<int>(fruitType))(), index);
+        return;
       } else {
         emit addResource(resourceManager->getRoot(),
                          "New Resource " + fruitName,
