@@ -54,14 +54,14 @@ void ResourceManager::insertNewResource(Resource *parent,
   insertChild(parent, newResource, index);
 }
 
-Resource *ResourceManager::copyResource(Resource *resource) {
-  Resource *newResource =
-      new Resource(resource->getName(), resource->getItem());
-  if (resource->hasChildren()) {
-    for (Resource *child : resource->getChildren()) {
-      Resource *copiedChild = copyResource(child);
-      newResource->addChild(copiedChild);
-    }
-  }
-  return newResource;
-}
+// Resource *ResourceManager::copyResource(Resource *resource) {
+//   Resource *newResource =
+//       new Resource(resource->getName(), resource->getItem());
+//   if (resource->hasChildren()) {
+//     for (Resource *child : resource->getChildren()) {
+//       Resource *copiedChild = copyResource(child);
+//       newResource->addChild(copiedChild);
+//     }
+//   }
+//   return newResource;
+// }

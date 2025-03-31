@@ -4,8 +4,10 @@
 #include "src/types.h"
 #include <QCursor>
 #include <QInputDialog>
+#include <QKeySequence>
 #include <QMenu>
 #include <QMessageBox>
+#include <QShortcut>
 #include <iostream>
 #include <qnamespace.h>
 #include <qtreewidget.h>
@@ -20,6 +22,7 @@ ResourceViewUI::ResourceViewUI(
 
   mainLayout->addWidget(resourceList);
   setLayout(mainLayout);
+  setupShortcuts();
   connect(resourceList, &ResourceList::customContextMenuRequested, this,
           &ResourceViewUI::showContextMenu);
   connect(resourceList, &ResourceList::itemClicked, this,
@@ -37,6 +40,9 @@ void ResourceViewUI::updateView() {
     recordExpandedStateFromTree(resourceList->topLevelItem(i));
   }
   repaintPage();
+  if (sortState != None) {
+    sortResources(sortCriteria, sortState);
+  }
 }
 
 void ResourceViewUI::repaintPage() {
@@ -168,12 +174,13 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
                                      map.at(static_cast<int>(fruitType))());
       });
     }
-    connect(copyAction, &QAction::triggered, this, [=]() {
-      clipboardResource = resourceManager->copyResource(clickedResource);
-    });
+    connect(copyAction, &QAction::triggered, this,
+            [=]() { clipboardResource = clickedResource; });
     connect(pasteAction, &QAction::triggered, this, [=]() {
-      resourceManager->insertChild(clickedResource, clipboardResource.value(),
-                                   clickedResource->getChildren().size());
+      resourceManager->insertNewResource(clickedResource,
+                                         clipboardResource.value()->getName(),
+                                         clipboardResource.value()->getItem(),
+                                         clickedResource->getChildren().size());
     });
 
     connect(deleteAction, &QAction::triggered, this,
@@ -204,7 +211,9 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       int index = parentItem->indexOfChild(clickedInsertPoint) / 2;
 
       connect(pasteAction, &QAction::triggered, this, [=]() {
-        resourceManager->insertChild(parent, clipboardResource.value(), index);
+        resourceManager->insertNewResource(
+            parent, clipboardResource.value()->getName(),
+            clipboardResource.value()->getItem(), index);
       });
 
       for (const auto &entry : fruitTypeBimap.left) {
@@ -221,8 +230,9 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     } else {
       connect(pasteAction, &QAction::triggered, this, [=]() {
         if (clipboardResource) {
-          resourceManager->insertChild(
-              resourceManager->getRoot(), clipboardResource.value(),
+          resourceManager->insertNewResource(
+              resourceManager->getRoot(), clipboardResource.value()->getName(),
+              clipboardResource.value()->getItem(),
               resourceManager->getRoot()->getChildren().size());
         }
       });
@@ -268,6 +278,8 @@ void ResourceViewUI::filterTreeItem(QTreeWidgetItem *item,
 
 void ResourceViewUI::sortResources(const std::string &criteria,
                                    const SortOrder &order) {
+  sortState = order;
+  sortCriteria = criteria;
   if (order == None) {
     updateView();
     return;
@@ -294,6 +306,9 @@ void ResourceViewUI::sortResources(const std::string &criteria,
                 return false;
               });
   }
+  for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
+    recordExpandedStateFromTree(resourceList->topLevelItem(i));
+  }
   resourceList->clear();
   for (Resource *resource : resources) {
     QTreeWidgetItem *insertBeforeItem = new QTreeWidgetItem(resourceList);
@@ -309,4 +324,34 @@ void ResourceViewUI::sortResources(const std::string &criteria,
   for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
     restoreExpandedStateFromTree(resourceList->topLevelItem(i));
   }
+}
+
+void ResourceViewUI::setupShortcuts() {
+  QShortcut *pasteShortcut = new QShortcut(QKeySequence::Paste, this);
+  connect(pasteShortcut, &QShortcut::activated, this, [this]() {
+    if (!clipboardResource)
+      return;
+    else {
+      if (selectedResource) {
+        resourceManager->insertNewResource(
+            selectedResource.value(), clipboardResource.value()->getName(),
+            clipboardResource.value()->getItem(),
+            selectedResource.value()->getChildren().size());
+      } else {
+        ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+            resourceList->currentItem()->parent());
+        Resource *parent =
+            parentItem ? parentItem->getResource() : resourceManager->getRoot();
+        int index =
+            parentItem
+                ? parentItem->indexOfChild(resourceList->currentItem()) / 2
+                : resourceList->indexOfTopLevelItem(
+                      resourceList->currentItem()) /
+                      2;
+        resourceManager->insertNewResource(
+            parent, clipboardResource.value()->getName(),
+            clipboardResource.value()->getItem(), index);
+      }
+    }
+  });
 }
