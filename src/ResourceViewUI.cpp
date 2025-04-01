@@ -324,7 +324,6 @@ void ResourceViewUI::sortResources(const std::string &criteria,
 
 void ResourceViewUI::setupShortcuts() {
   QShortcut *pasteShortcut = new QShortcut(QKeySequence::Paste, this);
-  std::cout << (selectedResource ? "yes" : "no") << std::endl;
   connect(pasteShortcut, &QShortcut::activated, this, [this]() {
     if (!clipboardResource)
       return;
