@@ -336,27 +336,25 @@ void ResourceViewUI::setupShortcuts() {
   QShortcut *pasteShortcut = new QShortcut(QKeySequence::Paste, this);
   connect(pasteShortcut, &QShortcut::activated, this, [this]() {
     if (clipboardResource) {
+      Resource *newResource =
+          resourceManager->copyResource(clipboardResource.value());
+      Resource *target;
+      int index;
       if (selectedResource) {
-        Resource *newResource =
-            resourceManager->copyResource(clipboardResource.value());
-        resourceManager->insertChild(
-            selectedResource.value(), newResource,
-            selectedResource.value()->getChildren().size());
+        target = selectedResource.value();
+        index = target->getChildren().size();
       } else {
         ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
             resourceList->currentItem()->parent());
-        Resource *parent =
+        target =
             parentItem ? parentItem->getResource() : resourceManager->getRoot();
-        int index =
-            parentItem
-                ? parentItem->indexOfChild(resourceList->currentItem()) / 2
-                : resourceList->indexOfTopLevelItem(
-                      resourceList->currentItem()) /
-                      2;
-        Resource *newResource =
-            resourceManager->copyResource(clipboardResource.value());
-        resourceManager->insertChild(parent, newResource, index);
+        index = parentItem
+                    ? parentItem->indexOfChild(resourceList->currentItem()) / 2
+                    : resourceList->indexOfTopLevelItem(
+                          resourceList->currentItem()) /
+                          2;
       }
+      resourceManager->insertChild(target, newResource, index);
     }
   });
 }
