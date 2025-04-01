@@ -178,8 +178,12 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       clipboardResource = resourceManager->copyResource(clickedResource);
     });
     connect(pasteAction, &QAction::triggered, this, [=]() {
-      resourceManager->insertChild(clickedResource, clipboardResource.value(),
-                                   clickedResource->getChildren().size());
+      if (clipboardResource) {
+        Resource *newResource =
+            resourceManager->copyResource(clipboardResource.value());
+        resourceManager->insertChild(clickedResource, newResource,
+                                     clickedResource->getChildren().size());
+      }
     });
 
     connect(deleteAction, &QAction::triggered, this,
@@ -210,7 +214,11 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       int index = parentItem->indexOfChild(clickedInsertPoint) / 2;
 
       connect(pasteAction, &QAction::triggered, this, [=]() {
-        resourceManager->insertChild(parent, clipboardResource.value(), index);
+        if (clipboardResource) {
+          Resource *newResource =
+              resourceManager->copyResource(clipboardResource.value());
+          resourceManager->insertChild(parent, newResource, index);
+        }
       });
 
       for (const auto &entry : fruitTypeBimap.left) {
@@ -227,8 +235,10 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     } else {
       connect(pasteAction, &QAction::triggered, this, [=]() {
         if (clipboardResource) {
+          Resource *newResource =
+              resourceManager->copyResource(clipboardResource.value());
           resourceManager->insertChild(
-              resourceManager->getRoot(), clipboardResource.value(),
+              resourceManager->getRoot(), newResource,
               resourceManager->getRoot()->getChildren().size());
         }
       });
@@ -325,16 +335,13 @@ void ResourceViewUI::sortResources(const std::string &criteria,
 void ResourceViewUI::setupShortcuts() {
   QShortcut *pasteShortcut = new QShortcut(QKeySequence::Paste, this);
   connect(pasteShortcut, &QShortcut::activated, this, [this]() {
-    if (!clipboardResource)
-      return;
-    else {
-      ResourceTreeItem *item =
-          dynamic_cast<ResourceTreeItem *>(resourceList->currentItem());
-      Resource *selectedResource = item->getResource();
+    if (clipboardResource) {
       if (selectedResource) {
-        resourceManager->insertChild(selectedResource,
-                                     clipboardResource.value(),
-                                     selectedResource->getChildren().size());
+        Resource *newResource =
+            resourceManager->copyResource(clipboardResource.value());
+        resourceManager->insertChild(
+            selectedResource.value(), newResource,
+            selectedResource.value()->getChildren().size());
       } else {
         ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
             resourceList->currentItem()->parent());
@@ -346,7 +353,9 @@ void ResourceViewUI::setupShortcuts() {
                 : resourceList->indexOfTopLevelItem(
                       resourceList->currentItem()) /
                       2;
-        resourceManager->insertChild(parent, clipboardResource.value(), index);
+        Resource *newResource =
+            resourceManager->copyResource(clipboardResource.value());
+        resourceManager->insertChild(parent, newResource, index);
       }
     }
   });
