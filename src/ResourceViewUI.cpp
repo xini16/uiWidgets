@@ -324,14 +324,18 @@ void ResourceViewUI::sortResources(const std::string &criteria,
 
 void ResourceViewUI::setupShortcuts() {
   QShortcut *pasteShortcut = new QShortcut(QKeySequence::Paste, this);
+  std::cout << (selectedResource ? "yes" : "no") << std::endl;
   connect(pasteShortcut, &QShortcut::activated, this, [this]() {
     if (!clipboardResource)
       return;
     else {
+      ResourceTreeItem *item =
+          dynamic_cast<ResourceTreeItem *>(resourceList->currentItem());
+      Resource *selectedResource = item->getResource();
       if (selectedResource) {
-        resourceManager->insertChild(
-            selectedResource.value(), clipboardResource.value(),
-            selectedResource.value()->getChildren().size());
+        resourceManager->insertChild(selectedResource,
+                                     clipboardResource.value(),
+                                     selectedResource->getChildren().size());
       } else {
         ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
             resourceList->currentItem()->parent());
