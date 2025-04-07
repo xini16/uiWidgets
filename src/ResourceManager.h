@@ -1,8 +1,7 @@
 #ifndef RESOURCEMANAGER_H
 #define RESOURCEMANAGER_H
-#include "Resource.h"
 #include <QObject>
-
+class Resource;
 class ResourceManager : public QObject {
   Q_OBJECT
 public:

@@ -1,4 +1,5 @@
 #include "ResourceManager.h"
+#include "Resource.h"
 #include "src/types.h"
 #include <iostream>
 

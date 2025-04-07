@@ -163,15 +163,14 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     QAction *deleteAction = contextMenu.addAction("Delete");
     QAction *renameAction = contextMenu.addAction("Rename");
     QAction *cutAction = contextMenu.addAction("Cut");
-    for (const auto &entry : fruitTypeBimap.left) {
-      FruitType fruitType = entry.first;
-      std::string fruitName = entry.second;
-      QAction *action =
-          newSubMenu->addAction(QString::fromStdString(fruitName));
+    for (const auto [type, typeName] : TheMap.left) {
+      // Type type = entry.first;
+      // std::string typeName = entry.second;
+      QAction *action = newSubMenu->addAction(QString::fromStdString(typeName));
       connect(action, &QAction::triggered, this, [=]() {
         resourceManager->addResource(clickedResource,
-                                     "New Resource " + fruitName,
-                                     map.at(static_cast<int>(fruitType))());
+                                     "New Resource " + typeName,
+                                     map.at(static_cast<int>(type))());
       });
     }
     connect(copyAction, &QAction::triggered, this, [=]() {
@@ -221,15 +220,15 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
         }
       });
 
-      for (const auto &entry : fruitTypeBimap.left) {
-        FruitType fruitType = entry.first;
-        std::string fruitName = entry.second;
+      for (const auto [type, typeName] : TheMap.left) {
+        // Type type = entry.first;
+        // std::string typeName = entry.second;
         QAction *action =
-            newSubMenu->addAction(QString::fromStdString(fruitName));
+            newSubMenu->addAction(QString::fromStdString(typeName));
         connect(action, &QAction::triggered, this, [=]() {
-          resourceManager->insertNewResource(
-              parent, "New Resource " + fruitName,
-              map.at(static_cast<int>(fruitType))(), index);
+          resourceManager->insertNewResource(parent, "New Resource " + typeName,
+                                             map.at(static_cast<int>(type))(),
+                                             index);
         });
       }
     } else {
@@ -242,15 +241,15 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
               resourceManager->getRoot()->getChildren().size());
         }
       });
-      for (const auto &entry : fruitTypeBimap.left) {
-        FruitType fruitType = entry.first;
-        std::string fruitName = entry.second;
+      for (const auto [type, typeName] : TheMap.left) {
+        // Type type = entry.first;
+        // std::string typeName = entry.second;
         QAction *action =
-            newSubMenu->addAction(QString::fromStdString(fruitName));
+            newSubMenu->addAction(QString::fromStdString(typeName));
         connect(action, &QAction::triggered, this, [=]() {
           resourceManager->addResource(resourceManager->getRoot(),
-                                       "New Resource " + fruitName,
-                                       map.at(static_cast<int>(fruitType))());
+                                       "New Resource " + typeName,
+                                       map.at(static_cast<int>(type))());
         });
       }
     }
@@ -356,5 +355,12 @@ void ResourceViewUI::setupShortcuts() {
       }
       resourceManager->insertChild(target, newResource, index);
     }
+  });
+
+  QShortcut *copyShortcut = new QShortcut(QKeySequence::Copy, this);
+  connect(copyShortcut, &QShortcut::activated, this, [this]() {
+    if (selectedResource)
+      clipboardResource =
+          resourceManager->copyResource(selectedResource.value());
   });
 }

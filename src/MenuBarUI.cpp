@@ -11,15 +11,15 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
   addButton = new QPushButton(this);
   addButton->setText("Add");
   addMenu = new QMenu(this);
-  for (const auto &entry : fruitTypeBimap.left) {
-    FruitType fruitType = entry.first;
-    std::string fruitName = entry.second;
-    QAction *action = addMenu->addAction(QString::fromStdString(fruitName));
+  for (const auto [type, typeName] : TheMap.left) {
+    // Type type = entry.first;
+    // std::string typeName = entry.second;
+    QAction *action = addMenu->addAction(QString::fromStdString(typeName));
 
     connect(action, &QAction::triggered, this, [=]() {
       if (selectedResource) {
-        emit addResource(selectedResource.value(), "New Resource " + fruitName,
-                         map.at(static_cast<int>(fruitType))());
+        emit addResource(selectedResource.value(), "New Resource " + typeName,
+                         map.at(static_cast<int>(type))());
         return;
       } else if (selectedInsertPoint) {
         ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
@@ -30,13 +30,12 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
             parentItem
                 ? parentItem->indexOfChild(selectedInsertPoint.value()) / 2
                 : indexOfTopLevel;
-        emit insertNewResource(parent, "New Resource " + fruitName,
-                               map.at(static_cast<int>(fruitType))(), index);
+        emit insertNewResource(parent, "New Resource " + typeName,
+                               map.at(static_cast<int>(type))(), index);
         return;
       } else {
-        emit addResource(resourceManager->getRoot(),
-                         "New Resource " + fruitName,
-                         map.at(static_cast<int>(fruitType))());
+        emit addResource(resourceManager->getRoot(), "New Resource " + typeName,
+                         map.at(static_cast<int>(type))());
         return;
       }
       assert(false);

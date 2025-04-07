@@ -1,13 +1,15 @@
-#include "ResourceManagerTemp.h"
+#include "ResourceManagerActual.h"
+#include "Resource.h"
 #include "ResourceManager.h"
 #include "fruit.h"
 #include <iostream>
 
 template <class T>
-ResourceManagerTemp<T>::ResourceManagerTemp(ResourceManager *resourceManager)
+ResourceManagerActual<T>::ResourceManagerActual(
+    ResourceManager *resourceManager)
     : resourceManager(resourceManager) {}
 
-template <class T> void ResourceManagerTemp<T>::createTestData() {
+template <class T> void ResourceManagerActual<T>::createTestData() {
   Resource *folder1 = new Resource("Folder A", new T());
   Resource *folder2 = new Resource("Folder B", new T());
 
@@ -29,8 +31,8 @@ template <class T> void ResourceManagerTemp<T>::createTestData() {
   emit resourceManager->resourceUpdated();
 }
 
-template <class T> T *ResourceManagerTemp<T>::getItem(Resource *resource) {
+template <class T> T *ResourceManagerActual<T>::getItem(Resource *resource) {
   return reinterpret_cast<T *>(resource->getItem());
 }
 
-template class ResourceManagerTemp<Fruit>;
+template class ResourceManagerActual<Fruit>;
