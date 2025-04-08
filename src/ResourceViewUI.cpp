@@ -88,7 +88,9 @@ void ResourceViewUI::onItemSelected() {
     assert(selectedResource);
     emit resourceSelected(selectedResource);
   } else {
-    emit insertPointSelected(resourceList->currentItem(), getIndex());
+    emit insertPointSelected(resourceList->currentItem(),
+                             getIndex(resourceList->indexOfTopLevelItem(
+                                 resourceList->currentItem())));
   }
 }
 
@@ -102,7 +104,7 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
     ResourceTreeItem *parentItem =
         dynamic_cast<ResourceTreeItem *>(target->parent());
     Resource *parent = parentItem->getResource();
-    int index = getIndex(parentItem);
+    int index = getIndex(parentItem->indexOfChild(target));
     std::cout << "dragged resource has parent " << draggedResource->getParent()
               << std::endl;
     resourceManager->removeParent(draggedResource);
@@ -207,7 +209,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       ResourceTreeItem *parentItem =
           dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
       Resource *parent = parentItem->getResource();
-      int index = getIndex(parentItem);
+      int index = getIndex(parentItem->indexOfChild(clickedInsertPoint));
 
       connect(pasteAction, &QAction::triggered, this, [=]() {
         if (clipboardResource) {
@@ -340,7 +342,10 @@ void ResourceViewUI::setupShortcuts() {
             resourceList->currentItem()->parent());
         target =
             parentItem ? parentItem->getResource() : resourceManager->getRoot();
-        index = getIndex(parentItem);
+        index = parentItem ? getIndex(parentItem->indexOfChild(
+                                 resourceList->currentItem()))
+                           : getIndex(resourceList->indexOfTopLevelItem(
+                                 resourceList->currentItem()));
       }
       resourceManager->insertChild(target, newResource, index);
     }
@@ -354,12 +359,8 @@ void ResourceViewUI::setupShortcuts() {
   });
 }
 
-int ResourceViewUI::getIndex(ResourceTreeItem *parentItem) {
-  if (parentItem) {
-    return parentItem->indexOfChild(resourceList->currentItem()) /
-           2; //返回文件夹内插入点的index。因为插入点和资源都是qtreewidgetitem
-              //所以/2就是资源的实际index
-  } else
-    return resourceList->indexOfTopLevelItem(resourceList->currentItem()) /
-           2; //顶层插入点的情况
+int ResourceViewUI::getIndex(int rawIndex) {
+  return rawIndex /
+         2; //返回文件夹内插入点的index。因为插入点和资源都是qtreewidgetitem
+            //所以/2就是资源的实际index
 }

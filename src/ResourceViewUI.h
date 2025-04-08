@@ -46,7 +46,7 @@ private:
   void filterTreeItem(QTreeWidgetItem *item, const QString &searchText);
   void repaintPage();
   void setupShortcuts();
-  int getIndex(ResourceTreeItem *parentItem = nullptr);
+  int getIndex(int rawIndex);
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
