@@ -24,8 +24,8 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
             selectedInsertPoint.value()->parent());
         Resource *parent =
             parentItem ? parentItem->getResource() : resourceManager->getRoot();
-        int index = parentItem ? parentItem->getIndex(
-                                     indexOfChild(selectedInsertPoint.value()))
+        int index = parentItem ? getIndex(parentItem->indexOfChild(
+                                     selectedInsertPoint.value()))
                                : indexOfTopLevel;
         emit insertNewResource(parent, "New Resource " + typeName,
                                map.at(static_cast<int>(type))(), index);
@@ -135,10 +135,4 @@ void MenuBarUI::onRenameResource() {
 
 void MenuBarUI::onSearchTextChanged(const QString &text) {
   emit searchResource(text);
-}
-
-int MenuBarUI::getIndex(int rawIndex) {
-  return rawIndex /
-         2; //返回文件夹内插入点的index。因为插入点和资源都是qtreewidgetitem
-            //所以/2就是资源的实际index
 }

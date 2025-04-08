@@ -3,6 +3,7 @@
 
 #include "ResourceViewUI.h"
 #include "fruitExample.h"
+#include "utils.h"
 #include <QActionGroup>
 #include <QHBoxLayout>
 #include <QInputDialog>
@@ -50,7 +51,6 @@ private:
   QToolButton *sortButton = nullptr;
   std::string criteria = "name";
   void sortbuttonClicked();
-  int getIndex(int rawIndex);
   SortOrder order = None;
   QLineEdit *searchBox = nullptr;
   QPushButton *renameButton = nullptr;

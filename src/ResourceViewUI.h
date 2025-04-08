@@ -4,6 +4,7 @@
 #include "ResourceList.h"
 #include "ResourceTreeItem.h"
 #include "fruitExample.h"
+#include "utils.h"
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QMenu>
@@ -46,7 +47,6 @@ private:
   void filterTreeItem(QTreeWidgetItem *item, const QString &searchText);
   void repaintPage();
   void setupShortcuts();
-  int getIndex(int rawIndex);
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
