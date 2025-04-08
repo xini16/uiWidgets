@@ -1,6 +1,7 @@
 #include "ResourceViewUI.h"
 #include "ResourceManager.h"
 #include "src/ResourceTreeItem.h"
+#include "src/fruitExample.h"
 #include "src/types.h"
 #include <QCursor>
 #include <QInputDialog>
@@ -87,9 +88,7 @@ void ResourceViewUI::onItemSelected() {
     assert(selectedResource);
     emit resourceSelected(selectedResource);
   } else {
-    emit insertPointSelected(
-        resourceList->currentItem(),
-        resourceList->indexOfTopLevelItem(resourceList->currentItem()) / 2);
+    emit insertPointSelected(resourceList->currentItem(), getIndex());
   }
 }
 
@@ -103,7 +102,7 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
     ResourceTreeItem *parentItem =
         dynamic_cast<ResourceTreeItem *>(target->parent());
     Resource *parent = parentItem->getResource();
-    int index = parentItem->indexOfChild(target) / 2;
+    int index = getIndex(parentItem);
     std::cout << "dragged resource has parent " << draggedResource->getParent()
               << std::endl;
     resourceManager->removeParent(draggedResource);
@@ -163,9 +162,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     QAction *deleteAction = contextMenu.addAction("Delete");
     QAction *renameAction = contextMenu.addAction("Rename");
     QAction *cutAction = contextMenu.addAction("Cut");
-    for (const auto [type, typeName] : TheMap.left) {
-      // Type type = entry.first;
-      // std::string typeName = entry.second;
+    for (const auto [type, typeName] : theMap.left) {
       QAction *action = newSubMenu->addAction(QString::fromStdString(typeName));
       connect(action, &QAction::triggered, this, [=]() {
         resourceManager->addResource(clickedResource,
@@ -210,7 +207,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       ResourceTreeItem *parentItem =
           dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
       Resource *parent = parentItem->getResource();
-      int index = parentItem->indexOfChild(clickedInsertPoint) / 2;
+      int index = getIndex(parentItem);
 
       connect(pasteAction, &QAction::triggered, this, [=]() {
         if (clipboardResource) {
@@ -220,9 +217,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
         }
       });
 
-      for (const auto [type, typeName] : TheMap.left) {
-        // Type type = entry.first;
-        // std::string typeName = entry.second;
+      for (const auto [type, typeName] : theMap.left) {
         QAction *action =
             newSubMenu->addAction(QString::fromStdString(typeName));
         connect(action, &QAction::triggered, this, [=]() {
@@ -241,9 +236,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
               resourceManager->getRoot()->getChildren().size());
         }
       });
-      for (const auto [type, typeName] : TheMap.left) {
-        // Type type = entry.first;
-        // std::string typeName = entry.second;
+      for (const auto [type, typeName] : theMap.left) {
         QAction *action =
             newSubMenu->addAction(QString::fromStdString(typeName));
         connect(action, &QAction::triggered, this, [=]() {
@@ -347,11 +340,7 @@ void ResourceViewUI::setupShortcuts() {
             resourceList->currentItem()->parent());
         target =
             parentItem ? parentItem->getResource() : resourceManager->getRoot();
-        index = parentItem
-                    ? parentItem->indexOfChild(resourceList->currentItem()) / 2
-                    : resourceList->indexOfTopLevelItem(
-                          resourceList->currentItem()) /
-                          2;
+        index = getIndex(parentItem);
       }
       resourceManager->insertChild(target, newResource, index);
     }
@@ -363,4 +352,14 @@ void ResourceViewUI::setupShortcuts() {
       clipboardResource =
           resourceManager->copyResource(selectedResource.value());
   });
+}
+
+int ResourceViewUI::getIndex(ResourceTreeItem *parentItem) {
+  if (parentItem) {
+    return parentItem->indexOfChild(resourceList->currentItem()) /
+           2; //返回文件夹内插入点的index。因为插入点和资源都是qtreewidgetitem
+              //所以/2就是资源的实际index
+  } else
+    return resourceList->indexOfTopLevelItem(resourceList->currentItem()) /
+           2; //顶层插入点的情况
 }

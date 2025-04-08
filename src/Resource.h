@@ -10,7 +10,7 @@ class ResourceManager;
 template <typename T> class ResourceManagerActual;
 class Resource {
 
-private:
+public:
   Resource(const std::string &name, void *item);
   ~Resource();
   std::string getName() const;
@@ -27,6 +27,8 @@ private:
   bool hasChildren() const;
   void insertChild(Resource *child, std::size_t index);
   void removeParent();
+
+private:
   std::string name;
   std::string tag;
   Resource *parent = nullptr;

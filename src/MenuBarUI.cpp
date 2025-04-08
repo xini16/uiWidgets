@@ -11,9 +11,7 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
   addButton = new QPushButton(this);
   addButton->setText("Add");
   addMenu = new QMenu(this);
-  for (const auto [type, typeName] : TheMap.left) {
-    // Type type = entry.first;
-    // std::string typeName = entry.second;
+  for (const auto [type, typeName] : theMap.left) {
     QAction *action = addMenu->addAction(QString::fromStdString(typeName));
 
     connect(action, &QAction::triggered, this, [=]() {
