@@ -1,6 +1,6 @@
 #include "MenuBarUI.h"
 #include "ResourceManager.h"
-#include "ResourceManagerTemp.h"
+#include "ResourceManagerActual.h"
 #include "ResourceViewUI.h"
 #include "fruit.h"
 #include "src/ResourceList.h"
@@ -13,8 +13,8 @@ int main(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
   ResourceManager resourceManager;
-  ResourceManagerTemp<Fruit> resourceManagerTemp(&resourceManager);
-  resourceManagerTemp.createTestData();
+  ResourceManagerActual<Fruit> resourceManagerActual(&resourceManager);
+  resourceManagerActual.createTestData();
 
   QWidget mainWidget;
   QVBoxLayout *layout = new QVBoxLayout(&mainWidget);

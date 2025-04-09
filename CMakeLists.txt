@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
-set(CMAKE_C_COMPILER "/usr/bin/clang-14")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++-14")
+set(CMAKE_C_COMPILER "/usr/bin/clang-18")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++-18")
 project(Box)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
