@@ -4,6 +4,7 @@
 #include "ResourceList.h"
 #include "ResourceTreeItem.h"
 #include "fruitExample.h"
+#include "utils.h"
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QMenu>
@@ -21,7 +22,7 @@ class ResourceViewUI : public QWidget {
 
 public:
   explicit ResourceViewUI(
-      ResourceManager *resourceManager,
+      ResourceManager *resourceManager = nullptr,
       std::unordered_map<int, std::function<void *()>> map = {},
       QWidget *parent = nullptr);
 
@@ -45,6 +46,7 @@ private:
   void restoreExpandedStateFromTree(QTreeWidgetItem *item);
   void filterTreeItem(QTreeWidgetItem *item, const QString &searchText);
   void repaintPage();
+  void setupShortcuts();
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
@@ -52,6 +54,8 @@ private:
   std::unordered_map<Resource *, bool> expansionStateMap;
   std::optional<Resource *> clipboardResource = {};
   std::unordered_map<int, std::function<void *()>> map;
+  SortOrder sortState = None;
+  std::string sortCriteria = "name";
 };
 
 #endif // RESOURCEVIEWUI_H

@@ -1,4 +1,5 @@
 #include "Resource.h"
+#include "ResourceManager.h"
 #include <algorithm>
 #include <cassert>
 #include <iostream>

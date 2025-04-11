@@ -6,10 +6,10 @@
 #include <functional>
 #include <unordered_map>
 
-enum FruitType { Apple, Banana, Orange };
+enum Type { Apple, Banana, Orange };
 
-typedef boost::bimap<FruitType, std::string> FruitTypeBimap;
-const FruitTypeBimap fruitTypeBimap = makeBimap<FruitTypeBimap>(
+typedef boost::bimap<Type, std::string> FruitTypeBimap;
+const FruitTypeBimap theMap = makeBimap<FruitTypeBimap>(
     {{Apple, "Apple"}, {Banana, "Banana"}, {Orange, "Orange"}});
 
 extern std::unordered_map<int, std::function<void *()>> fruitFactoryMap;

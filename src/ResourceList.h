@@ -1,7 +1,7 @@
 #ifndef RESOURCELIST_H
 #define RESOURCELIST_H
 
-#include "src/ResourceTreeItem.h"
+#include "ResourceTreeItem.h"
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
