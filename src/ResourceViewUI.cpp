@@ -166,16 +166,16 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     QAction *cutAction = contextMenu.addAction("Cut");
     for (const auto [type, typeName] : theMap.left) {
       QAction *action = newSubMenu->addAction(QString::fromStdString(typeName));
-      connect(action, &QAction::triggered, this, [=]() {
+      connect(action, &QAction::triggered, this, [=, this]() {
         resourceManager->addResource(clickedResource,
                                      "New Resource " + typeName,
                                      map.at(static_cast<int>(type))());
       });
     }
-    connect(copyAction, &QAction::triggered, this, [=]() {
+    connect(copyAction, &QAction::triggered, this, [=, this]() {
       clipboardResource = resourceManager->copyResource(clickedResource);
     });
-    connect(pasteAction, &QAction::triggered, this, [=]() {
+    connect(pasteAction, &QAction::triggered, this, [=, this]() {
       if (clipboardResource) {
         Resource *newResource =
             resourceManager->copyResource(clipboardResource.value());
@@ -185,8 +185,8 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     });
 
     connect(deleteAction, &QAction::triggered, this,
-            [=]() { resourceManager->deleteResource(clickedResource); });
-    connect(renameAction, &QAction::triggered, this, [=]() {
+            [=, this]() { resourceManager->deleteResource(clickedResource); });
+    connect(renameAction, &QAction::triggered, this, [=, this]() {
       bool inputFinished;
       QString newName = QInputDialog::getText(
           this, tr("Rename Resource"), tr("Enter new name for the resource:"),
@@ -199,7 +199,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
         return;
       }
     });
-    connect(cutAction, &QAction::triggered, this, [=]() {
+    connect(cutAction, &QAction::triggered, this, [=, this]() {
       resourceManager->removeParent(clickedResource);
       clipboardResource = clickedResource;
     });
@@ -211,7 +211,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       Resource *parent = parentItem->getResource();
       int index = getIndex(parentItem->indexOfChild(clickedInsertPoint));
 
-      connect(pasteAction, &QAction::triggered, this, [=]() {
+      connect(pasteAction, &QAction::triggered, this, [=, this]() {
         if (clipboardResource) {
           Resource *newResource =
               resourceManager->copyResource(clipboardResource.value());
@@ -222,14 +222,14 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       for (const auto [type, typeName] : theMap.left) {
         QAction *action =
             newSubMenu->addAction(QString::fromStdString(typeName));
-        connect(action, &QAction::triggered, this, [=]() {
+        connect(action, &QAction::triggered, this, [=, this]() {
           resourceManager->insertNewResource(parent, "New Resource " + typeName,
                                              map.at(static_cast<int>(type))(),
                                              index);
         });
       }
     } else {
-      connect(pasteAction, &QAction::triggered, this, [=]() {
+      connect(pasteAction, &QAction::triggered, this, [=, this]() {
         if (clipboardResource) {
           Resource *newResource =
               resourceManager->copyResource(clipboardResource.value());
@@ -241,7 +241,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       for (const auto [type, typeName] : theMap.left) {
         QAction *action =
             newSubMenu->addAction(QString::fromStdString(typeName));
-        connect(action, &QAction::triggered, this, [=]() {
+        connect(action, &QAction::triggered, this, [=, this]() {
           resourceManager->addResource(resourceManager->getRoot(),
                                        "New Resource " + typeName,
                                        map.at(static_cast<int>(type))());

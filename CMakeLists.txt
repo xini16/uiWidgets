@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 set(CMAKE_C_COMPILER "/usr/bin/clang-18")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++-18")
 project(Box)
@@ -16,7 +16,7 @@ find_package(Boost REQUIRED)
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 file(GLOB SOURCES "src/*.cpp" "src/*.h")
-
+add_compile_options(-Werror)
 add_executable(ui  ${SOURCES})
 
 target_link_libraries(ui Qt6::Widgets)

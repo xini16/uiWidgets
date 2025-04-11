@@ -11,10 +11,10 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
   addButton = new QPushButton(this);
   addButton->setText("Add");
   addMenu = new QMenu(this);
-  for (const auto [type, typeName] : theMap.left) {
+  for (auto [type, typeName] : theMap.left) {
     QAction *action = addMenu->addAction(QString::fromStdString(typeName));
 
-    connect(action, &QAction::triggered, this, [=]() {
+    connect(action, &QAction::triggered, this, [=, this]() {
       if (selectedResource) {
         emit addResource(selectedResource.value(), "New Resource " + typeName,
                          map.at(static_cast<int>(type))());
@@ -38,7 +38,7 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
       assert(false);
     });
   }
-  connect(addButton, &QPushButton::clicked, this, [=]() {
+  connect(addButton, &QPushButton::clicked, this, [=, this]() {
     addMenu->exec(addButton->mapToGlobal(QPoint(0, addButton->height())));
   });
   QMenu *sortHoverMenu = new QMenu(this);
@@ -56,16 +56,16 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
   sortButton->setMenu(sortHoverMenu);
   sortButton->setPopupMode(QToolButton::MenuButtonPopup);
   order = None;
-  connect(name, &QAction::triggered, this, [=]() {
+  connect(name, &QAction::triggered, this, [=, this]() {
     criteria = "name";
     emit sortResources(criteria, order);
   });
-  connect(tag, &QAction::triggered, this, [=]() {
+  connect(tag, &QAction::triggered, this, [=, this]() {
     criteria = "tag";
     emit sortResources(criteria, order);
   });
   connect(sortButton, &QPushButton::clicked, this,
-          [=]() { sortbuttonClicked(); });
+          [=, this]() { sortbuttonClicked(); });
 
   searchBox = new QLineEdit(this);
   searchBox->setPlaceholderText("Search...");
