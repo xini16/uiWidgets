@@ -56,7 +56,4 @@ void Resource::insertChild(Resource *child, std::size_t index) {
   child->setParent(this);
 }
 
-void Resource::removeParent() {
-  std::cout << "Resource::removeParent()" << std::endl;
-  parent->removeChild(this);
-}
+void Resource::removeParent() { parent->removeChild(this); }

@@ -24,11 +24,9 @@ class MenuBarUI : public QWidget {
 
 public:
   explicit MenuBarUI(ResourceManager *resourceManager,
+                     ResourceViewUI *resourceViewUI,
                      std::unordered_map<int, std::function<void *()>> map = {},
                      QWidget *parent = nullptr);
-  std::optional<Resource *> selectedResource = {};
-  std::optional<QTreeWidgetItem *> selectedInsertPoint = {};
-  int indexOfTopLevel = 0;
 
 signals:
   void addResource(Resource *parent, const std::string &name, void *item);
@@ -56,6 +54,7 @@ private:
   QPushButton *renameButton = nullptr;
   QPushButton *deleteButton = nullptr;
   QMenu *addMenu = nullptr;
+  ResourceViewUI *resourceViewUI = nullptr;
 };
 
 #endif // MENUBARUI_H

@@ -33,6 +33,7 @@ private:
   std::string tag;
   Resource *parent = nullptr;
   std::vector<Resource *> children = {};
+  bool isLeaf;
   void *item;
   void *getItem() const;
   friend class ResourceManager;
