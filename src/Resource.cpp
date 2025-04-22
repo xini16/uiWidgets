@@ -4,8 +4,8 @@
 #include <cassert>
 #include <iostream>
 
-Resource::Resource(const std::string &name, void *item)
-    : name(name), item(item), parent(nullptr) {}
+Resource::Resource(const std::string &name, void *item, bool leaf)
+    : name(name), item(item), leaf(leaf), parent(nullptr) {}
 
 Resource::~Resource() {
   for (Resource *child : children) {
@@ -25,7 +25,7 @@ Resource *Resource::getParent() const { return parent; }
 
 void Resource::setParent(Resource *newParent) { parent = newParent; }
 
-bool Resource::isFolder() const { return !children.empty(); }
+bool Resource::isLeaf() const { return leaf; }
 
 void Resource::setName(const std::string &name) { this->name = name; }
 

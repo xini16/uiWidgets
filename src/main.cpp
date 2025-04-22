@@ -24,18 +24,6 @@ int main(int argc, char *argv[]) {
       new ResourceViewUI(&resourceManager, fruitFactoryMap);
   MenuBarUI *menuBar =
       new MenuBarUI(&resourceManager, resourceView, fruitFactoryMap);
-  QObject::connect(menuBar, &MenuBarUI::addResource, &resourceManager,
-                   &ResourceManager::addResource);
-  QObject::connect(menuBar, &MenuBarUI::renameResource, &resourceManager,
-                   &ResourceManager::renameResource);
-  QObject::connect(menuBar, &MenuBarUI::sortResources, resourceView,
-                   &ResourceViewUI::sortResources);
-  QObject::connect(menuBar, &MenuBarUI::deleteResource, &resourceManager,
-                   &ResourceManager::deleteResource);
-  QObject::connect(menuBar, &MenuBarUI::insertNewResource, &resourceManager,
-                   &ResourceManager::insertNewResource);
-  QObject::connect(menuBar, &MenuBarUI::searchResource, resourceView,
-                   &ResourceViewUI::filterResources);
 
   layout->addWidget(menuBar);
   layout->addWidget(resourceView);

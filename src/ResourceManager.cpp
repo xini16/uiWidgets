@@ -4,12 +4,12 @@
 #include <iostream>
 
 ResourceManager::ResourceManager(QObject *parent)
-    : QObject(parent), root(new Resource("root", (void *)nullptr)) {}
+    : QObject(parent), root(new Resource("root", (void *)nullptr, false)) {}
 
 void ResourceManager::addResource(Resource *parent, const std::string &name,
                                   void *type) {
   assert(parent);
-  Resource *newResource = new Resource(name, type);
+  Resource *newResource = new Resource(name, type, true);
   parent->addChild(newResource);
   emit resourceUpdated();
 }
@@ -51,13 +51,13 @@ void ResourceManager::insertNewResource(Resource *parent,
                                         const std::string &name, void *type,
                                         std::size_t index) {
   assert(parent);
-  Resource *newResource = new Resource(name, type);
+  Resource *newResource = new Resource(name, type, true);
   insertChild(parent, newResource, index);
 }
 
 Resource *ResourceManager::copyResource(Resource *resource) {
-  Resource *newResource =
-      new Resource(resource->getName(), resource->getItem());
+  Resource *newResource = new Resource(resource->getName(), resource->getItem(),
+                                       resource->isLeaf());
   if (resource->hasChildren()) {
     for (Resource *child : resource->getChildren()) {
       Resource *copiedChild = copyResource(child);
@@ -65,4 +65,18 @@ Resource *ResourceManager::copyResource(Resource *resource) {
     }
   }
   return newResource;
+}
+
+void ResourceManager::addFolder(Resource *parent, const std::string &name) {
+  assert(parent);
+  Resource *newFolder = new Resource(name, nullptr, false);
+  parent->addChild(newFolder);
+  emit resourceUpdated();
+}
+
+void ResourceManager::insertFolder(Resource *parent, const std::string &name,
+                                   int index) {
+  assert(parent);
+  Resource *newFolder = new Resource(name, nullptr, false);
+  insertChild(parent, newFolder, index);
 }

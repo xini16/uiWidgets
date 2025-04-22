@@ -115,9 +115,14 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
     assert(targetResource);
     Resource *parent = targetResource->getResource();
     assert(parent);
-    int index = parent->getChildren().size();
-    resourceManager->removeParent(draggedResource);
-    resourceManager->insertChild(parent, draggedResource, index);
+    if (parent->isLeaf())
+      QMessageBox::warning(this, tr("Error"),
+                           tr("Target is a file, please drop into a folder."));
+    else {
+      int index = parent->getChildren().size();
+      resourceManager->removeParent(draggedResource);
+      resourceManager->insertChild(parent, draggedResource, index);
+    }
   }
   updateView();
 }
@@ -170,7 +175,8 @@ void ResourceViewUI::pasteAction(std::optional<Resource *> targetItem) {
               : getIndex(resourceList->indexOfTopLevelItem(
                     resourceList->currentItem()));
     }
-    resourceManager->insertChild(target, newResource, index);
+    if (!target->isLeaf())
+      resourceManager->insertChild(target, newResource, index);
   }
 }
 
@@ -178,30 +184,34 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
   QMenu contextMenu;
   ResourceTreeItem *item =
       dynamic_cast<ResourceTreeItem *>(resourceList->itemAt(pos));
-  QAction *pasteAction = contextMenu.addAction("Paste");
-  QAction *newAction = contextMenu.addAction("New");
-  QMenu *newSubMenu = new QMenu("Type", &contextMenu);
-  newAction->setMenu(newSubMenu);
   if (item) {
     Resource *clickedResource = item->getResource();
     assert(clickedResource);
+    if (!clickedResource->isLeaf()) {
+      QAction *pasteAction = contextMenu.addAction("Paste");
+      QAction *newAction = contextMenu.addAction("New");
+      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+      newAction->setMenu(newSubMenu);
+      for (const auto [type, typeName] : theMap.left) {
+        QAction *action =
+            newSubMenu->addAction(QString::fromStdString(typeName));
+        connect(action, &QAction::triggered, this, [=, this]() {
+          resourceManager->addResource(clickedResource,
+                                       "New Resource " + typeName,
+                                       map.at(static_cast<int>(type))());
+        });
+      }
+      connect(pasteAction, &QAction::triggered, this,
+              [=, this]() { this->pasteAction(clickedResource); });
+    }
     QAction *copyAction = contextMenu.addAction("Copy");
     QAction *deleteAction = contextMenu.addAction("Delete");
     QAction *renameAction = contextMenu.addAction("Rename");
     QAction *cutAction = contextMenu.addAction("Cut");
-    for (const auto [type, typeName] : theMap.left) {
-      QAction *action = newSubMenu->addAction(QString::fromStdString(typeName));
-      connect(action, &QAction::triggered, this, [=, this]() {
-        resourceManager->addResource(clickedResource,
-                                     "New Resource " + typeName,
-                                     map.at(static_cast<int>(type))());
-      });
-    }
+
     connect(copyAction, &QAction::triggered, this, [=, this]() {
       clipboardResource = resourceManager->copyResource(clickedResource);
     });
-    connect(pasteAction, &QAction::triggered, this,
-            [=, this]() { this->pasteAction(clickedResource); });
 
     connect(deleteAction, &QAction::triggered, this,
             [=, this]() { resourceManager->deleteResource(clickedResource); });
@@ -229,7 +239,10 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
           dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
       Resource *parent = parentItem->getResource();
       int index = getIndex(parentItem->indexOfChild(clickedInsertPoint));
-
+      QAction *pasteAction = contextMenu.addAction("Paste");
+      QAction *newAction = contextMenu.addAction("New");
+      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+      newAction->setMenu(newSubMenu);
       connect(pasteAction, &QAction::triggered, this,
               [=, this]() { this->pasteAction(parent); });
 
@@ -243,6 +256,10 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
         });
       }
     } else {
+      QAction *pasteAction = contextMenu.addAction("Paste");
+      QAction *newAction = contextMenu.addAction("New");
+      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+      newAction->setMenu(newSubMenu);
       connect(pasteAction, &QAction::triggered, this,
               [=, this]() { this->pasteAction(resourceManager->getRoot()); });
       for (const auto [type, typeName] : theMap.left) {
