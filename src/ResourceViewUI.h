@@ -27,7 +27,6 @@ public:
       QWidget *parent = nullptr);
   std::optional<Resource *> getSelectedResource();
   std::optional<QTreeWidgetItem *> getSelectedInsertPoint();
-  int getInsertPointIndex();
 
 public slots:
   void filterResources(const QString &searchText);
@@ -57,7 +56,7 @@ private:
   std::unordered_map<int, std::function<void *()>> map;
   SortOrder sortState = None;
   std::string sortCriteria = "name";
-  int insertPointIndex;
+  friend class MenuBarUI;
 };
 
 #endif // RESOURCEVIEWUI_H

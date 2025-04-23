@@ -1,6 +1,6 @@
 #include "MenuBarUI.h"
 #include "ResourceManager.h"
-#include "src/ResourceViewUI.h"
+#include "ResourceViewUI.h"
 #include <iostream>
 #include <qtreewidget.h>
 
@@ -39,7 +39,8 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
         int index =
             parentItem
                 ? getIndex(parentItem->indexOfChild(currentInsertPoint.value()))
-                : resourceViewUI->getInsertPointIndex();
+                : getIndex(resourceViewUI->resourceList->indexOfTopLevelItem(
+                      resourceViewUI->resourceList->currentItem()));
         emit insertNewResource(parent, "New Resource " + typeName,
                                map.at(static_cast<int>(type))(), index);
         return;
@@ -76,7 +77,8 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
       int index =
           parentItem
               ? getIndex(parentItem->indexOfChild(currentInsertPoint.value()))
-              : resourceViewUI->getInsertPointIndex();
+              : getIndex(resourceViewUI->resourceList->indexOfTopLevelItem(
+                    resourceViewUI->resourceList->currentItem()));
       emit insertFolder(parent, "New Folder", index);
       return;
     } else {

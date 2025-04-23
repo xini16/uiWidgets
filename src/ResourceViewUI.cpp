@@ -89,8 +89,6 @@ void ResourceViewUI::onItemSelected() {
     selectedInsertPoint.reset();
   } else {
     selectedInsertPoint = resourceList->currentItem();
-    insertPointIndex = getIndex(
-        resourceList->indexOfTopLevelItem(resourceList->currentItem()));
     selectedResource.reset();
   }
 }
@@ -210,6 +208,7 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
     QAction *cutAction = contextMenu.addAction("Cut");
 
     connect(copyAction, &QAction::triggered, this, [=, this]() {
+      clipboardResource.reset();
       clipboardResource = resourceManager->copyResource(clickedResource);
     });
 
@@ -370,5 +369,3 @@ std::optional<Resource *> ResourceViewUI::getSelectedResource() {
 std::optional<QTreeWidgetItem *> ResourceViewUI::getSelectedInsertPoint() {
   return selectedInsertPoint;
 }
-
-int ResourceViewUI::getInsertPointIndex() { return insertPointIndex; }
