@@ -153,6 +153,16 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
           &ResourceViewUI::filterResources);
 }
 
+MenuBarUI::~MenuBarUI() {
+  delete addButton;
+  delete addFolderButton;
+  delete sortButton;
+  delete searchBox;
+  delete renameButton;
+  delete deleteButton;
+  delete addMenu;
+}
+
 void MenuBarUI::sortbuttonClicked() {
   switch (order) {
   case None:

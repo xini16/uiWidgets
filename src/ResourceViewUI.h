@@ -25,6 +25,7 @@ public:
       ResourceManager *resourceManager = nullptr,
       std::unordered_map<int, std::function<void *()>> map = {},
       QWidget *parent = nullptr);
+  ~ResourceViewUI();
   std::optional<Resource *> getSelectedResource();
   std::optional<QTreeWidgetItem *> getSelectedInsertPoint();
 

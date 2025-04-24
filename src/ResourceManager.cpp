@@ -80,3 +80,5 @@ void ResourceManager::insertFolder(Resource *parent, const std::string &name,
   Resource *newFolder = new Resource(name, nullptr, false);
   insertChild(parent, newFolder, index);
 }
+
+ResourceManager::~ResourceManager() { delete root; }

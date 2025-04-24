@@ -27,6 +27,7 @@ public:
                      ResourceViewUI *resourceViewUI,
                      std::unordered_map<int, std::function<void *()>> map = {},
                      QWidget *parent = nullptr);
+  ~MenuBarUI();
 
 signals:
   void addResource(Resource *parent, const std::string &name, void *item);

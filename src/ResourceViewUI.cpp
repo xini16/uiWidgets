@@ -75,7 +75,6 @@ void ResourceViewUI::populateTree(QTreeWidgetItem *parentItem,
     childItem->setText(0, QString::fromStdString(child->getName()));
     parentItem->addChild(insertBeforeItem);
     parentItem->addChild(childItem);
-
     populateTree(childItem, child);
   }
 }
@@ -120,6 +119,7 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
       int index = parent->getChildren().size();
       resourceManager->removeParent(draggedResource);
       resourceManager->insertChild(parent, draggedResource, index);
+      std::cout << "resourceviewUI here completed" << std::endl;
     }
   }
   updateView();
@@ -180,13 +180,13 @@ void ResourceViewUI::pasteAction(std::optional<Resource *> targetItem) {
 
 void ResourceViewUI::showContextMenu(const QPoint &pos) {
   QMenu contextMenu;
+  QAction *pasteAction = contextMenu.addAction("Paste");
   ResourceTreeItem *item =
       dynamic_cast<ResourceTreeItem *>(resourceList->itemAt(pos));
   if (item) {
     Resource *clickedResource = item->getResource();
     assert(clickedResource);
     if (!clickedResource->isLeaf()) {
-      QAction *pasteAction = contextMenu.addAction("Paste");
       QAction *newAction = contextMenu.addAction("New");
       QMenu *newSubMenu = new QMenu("Type", &contextMenu);
       newAction->setMenu(newSubMenu);
@@ -238,7 +238,6 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
           dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
       Resource *parent = parentItem->getResource();
       int index = getIndex(parentItem->indexOfChild(clickedInsertPoint));
-      QAction *pasteAction = contextMenu.addAction("Paste");
       QAction *newAction = contextMenu.addAction("New");
       QMenu *newSubMenu = new QMenu("Type", &contextMenu);
       newAction->setMenu(newSubMenu);
@@ -255,7 +254,6 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
         });
       }
     } else {
-      QAction *pasteAction = contextMenu.addAction("Paste");
       QAction *newAction = contextMenu.addAction("New");
       QMenu *newSubMenu = new QMenu("Type", &contextMenu);
       newAction->setMenu(newSubMenu);
@@ -369,3 +367,5 @@ std::optional<Resource *> ResourceViewUI::getSelectedResource() {
 std::optional<QTreeWidgetItem *> ResourceViewUI::getSelectedInsertPoint() {
   return selectedInsertPoint;
 }
+
+ResourceViewUI::~ResourceViewUI() { delete resourceList; }
