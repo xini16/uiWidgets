@@ -21,6 +21,11 @@ void ResourceList::dragMoveEvent(QDragMoveEvent *event) {
   static QTreeWidgetItem *previousHighlightedResource = nullptr;
 
   QTreeWidgetItem *itemUnderCursor = itemAt(event->position().toPoint());
+  QTreeWidgetItem *draggedItem = currentItem();
+  if (draggedItem && draggedItem->text(0).isEmpty()) {
+    event->ignore();
+    return;
+  }
   if (previousHighlightedInsert && previousHighlightedInsert->treeWidget()) {
     previousHighlightedInsert->setBackground(0, Qt::gray);
   }
@@ -54,4 +59,18 @@ void ResourceList::dropEvent(QDropEvent *event) {
 
   event->setDropAction(Qt::MoveAction);
   event->accept();
+}
+
+void ResourceList::mousePressEvent(QMouseEvent *event) {
+  if (event->button() == Qt::RightButton) {
+    QTreeWidgetItem *item = itemAt(event->position().toPoint());
+    if (item) {
+      if (!item->isSelected()) {
+        clearSelection();
+        item->setSelected(true);
+      }
+    }
+    return;
+  }
+  QTreeWidget::mousePressEvent(event);
 }

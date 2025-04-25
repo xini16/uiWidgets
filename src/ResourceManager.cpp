@@ -15,6 +15,14 @@ void ResourceManager::addResource(Resource *parent, const std::string &name,
 }
 
 void ResourceManager::deleteResource(Resource *resource) {
+  if (!resource)
+    return;
+  if (!resource->isLeaf()) {
+    std::vector<Resource *> children = resource->getChildren();
+    for (Resource *child : children) {
+      deleteResource(child);
+    }
+  }
   resource->getParent()->removeChild(resource);
   delete resource;
   emit resourceUpdated();
