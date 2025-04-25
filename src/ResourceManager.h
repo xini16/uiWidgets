@@ -6,6 +6,7 @@ class ResourceManager : public QObject {
   Q_OBJECT
 public:
   explicit ResourceManager(QObject *parent = nullptr);
+  ~ResourceManager();
   Resource *getRoot() { return root; }
   void addResource(Resource *parent, const std::string &name, void *type);
   void insertNewResource(Resource *parent, const std::string &name, void *type,
@@ -15,6 +16,8 @@ public:
   void insertChild(Resource *parent, Resource *child, std::size_t index);
   Resource *copyResource(Resource *resource);
   void removeParent(Resource *child);
+  void addFolder(Resource *parent, const std::string &name);
+  void insertFolder(Resource *parent, const std::string &name, int index);
 
 signals:
   void resourceUpdated();

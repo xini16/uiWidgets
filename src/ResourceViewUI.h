@@ -25,10 +25,9 @@ public:
       ResourceManager *resourceManager = nullptr,
       std::unordered_map<int, std::function<void *()>> map = {},
       QWidget *parent = nullptr);
-
-signals:
-  void resourceSelected(Resource *resource);
-  void insertPointSelected(QTreeWidgetItem *insertPoint, int index);
+  ~ResourceViewUI();
+  std::optional<Resource *> getSelectedResource();
+  std::optional<QTreeWidgetItem *> getSelectedInsertPoint();
 
 public slots:
   void filterResources(const QString &searchText);
@@ -47,15 +46,18 @@ private:
   void filterTreeItem(QTreeWidgetItem *item, const QString &searchText);
   void repaintPage();
   void setupShortcuts();
+  void pasteAction(std::optional<Resource *> targetItem);
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
   std::optional<Resource *> selectedResource = {};
+  std::optional<QTreeWidgetItem *> selectedInsertPoint = {};
   std::unordered_map<Resource *, bool> expansionStateMap;
   std::optional<Resource *> clipboardResource = {};
   std::unordered_map<int, std::function<void *()>> map;
   SortOrder sortState = None;
   std::string sortCriteria = "name";
+  friend class MenuBarUI;
 };
 
 #endif // RESOURCEVIEWUI_H

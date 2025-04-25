@@ -10,14 +10,14 @@ ResourceManagerActual<T>::ResourceManagerActual(
     : resourceManager(resourceManager) {}
 
 template <class T> void ResourceManagerActual<T>::createTestData() {
-  Resource *folder1 = new Resource("Folder A", new T());
-  Resource *folder2 = new Resource("Folder B", new T());
+  Resource *folder1 = new Resource("Folder A", new T(), false);
+  Resource *folder2 = new Resource("Folder B", new T(), false);
 
   resourceManager->getRoot()->addChild(folder1);
   resourceManager->getRoot()->addChild(folder2);
 
-  Resource *file1 = new Resource("File A1", new T());
-  Resource *file2 = new Resource("File B1", new T());
+  Resource *file1 = new Resource("File A1", new T(), true);
+  Resource *file2 = new Resource("File B1", new T(), true);
 
   folder1->addChild(file1);
   folder2->addChild(file2);

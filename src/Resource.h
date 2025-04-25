@@ -11,13 +11,13 @@ template <typename T> class ResourceManagerActual;
 class Resource {
 
 public:
-  Resource(const std::string &name, void *item);
+  Resource(const std::string &name, void *item, bool leaf);
   ~Resource();
   std::string getName() const;
   std::string getTag() const;
   std::vector<Resource *> getChildren() const;
   Resource *getParent() const;
-  bool isFolder() const;
+  bool isLeaf() const;
   void setName(const std::string &name);
   void setTag(const std::string &tag);
   void setItem(void *item);
@@ -35,6 +35,7 @@ private:
   std::vector<Resource *> children = {};
   void *item;
   void *getItem() const;
+  bool leaf;
   friend class ResourceManager;
   template <typename T> friend class ResourceManagerActual;
 };

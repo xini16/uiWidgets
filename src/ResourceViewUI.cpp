@@ -75,7 +75,6 @@ void ResourceViewUI::populateTree(QTreeWidgetItem *parentItem,
     childItem->setText(0, QString::fromStdString(child->getName()));
     parentItem->addChild(insertBeforeItem);
     parentItem->addChild(childItem);
-
     populateTree(childItem, child);
   }
 }
@@ -84,13 +83,12 @@ void ResourceViewUI::onItemSelected() {
   ResourceTreeItem *item =
       dynamic_cast<ResourceTreeItem *>(resourceList->currentItem());
   if (item) {
-    Resource *selectedResource = item->getResource();
+    selectedResource = item->getResource();
     assert(selectedResource);
-    emit resourceSelected(selectedResource);
+    selectedInsertPoint.reset();
   } else {
-    emit insertPointSelected(resourceList->currentItem(),
-                             getIndex(resourceList->indexOfTopLevelItem(
-                                 resourceList->currentItem())));
+    selectedInsertPoint = resourceList->currentItem();
+    selectedResource.reset();
   }
 }
 
@@ -114,9 +112,15 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
     assert(targetResource);
     Resource *parent = targetResource->getResource();
     assert(parent);
-    int index = parent->getChildren().size();
-    resourceManager->removeParent(draggedResource);
-    resourceManager->insertChild(parent, draggedResource, index);
+    if (parent->isLeaf())
+      QMessageBox::warning(this, tr("Error"),
+                           tr("Target is a file, please drop into a folder."));
+    else {
+      int index = parent->getChildren().size();
+      resourceManager->removeParent(draggedResource);
+      resourceManager->insertChild(parent, draggedResource, index);
+      std::cout << "resourceviewUI here completed" << std::endl;
+    }
   }
   updateView();
 }
@@ -149,39 +153,63 @@ void ResourceViewUI::restoreExpandedStateFromTree(QTreeWidgetItem *item) {
   }
 }
 
+void ResourceViewUI::pasteAction(std::optional<Resource *> targetItem) {
+  if (clipboardResource) {
+    Resource *newResource =
+        resourceManager->copyResource(clipboardResource.value());
+    Resource *target;
+    int index;
+    if (targetItem) {
+      target = targetItem.value();
+      index = target->getChildren().size();
+    } else {
+      ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+          resourceList->currentItem()->parent());
+      target =
+          parentItem ? parentItem->getResource() : resourceManager->getRoot();
+      index =
+          parentItem
+              ? getIndex(parentItem->indexOfChild(resourceList->currentItem()))
+              : getIndex(resourceList->indexOfTopLevelItem(
+                    resourceList->currentItem()));
+    }
+    if (!target->isLeaf())
+      resourceManager->insertChild(target, newResource, index);
+  }
+}
+
 void ResourceViewUI::showContextMenu(const QPoint &pos) {
   QMenu contextMenu;
+  QAction *pasteAction = contextMenu.addAction("Paste");
   ResourceTreeItem *item =
       dynamic_cast<ResourceTreeItem *>(resourceList->itemAt(pos));
-  QAction *pasteAction = contextMenu.addAction("Paste");
-  QAction *newAction = contextMenu.addAction("New");
-  QMenu *newSubMenu = new QMenu("Type", &contextMenu);
-  newAction->setMenu(newSubMenu);
   if (item) {
     Resource *clickedResource = item->getResource();
     assert(clickedResource);
+    if (!clickedResource->isLeaf()) {
+      QAction *newAction = contextMenu.addAction("New");
+      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+      newAction->setMenu(newSubMenu);
+      for (const auto [type, typeName] : theMap.left) {
+        QAction *action =
+            newSubMenu->addAction(QString::fromStdString(typeName));
+        connect(action, &QAction::triggered, this, [=, this]() {
+          resourceManager->addResource(clickedResource,
+                                       "New Resource " + typeName,
+                                       map.at(static_cast<int>(type))());
+        });
+      }
+      connect(pasteAction, &QAction::triggered, this,
+              [=, this]() { this->pasteAction(clickedResource); });
+    }
     QAction *copyAction = contextMenu.addAction("Copy");
     QAction *deleteAction = contextMenu.addAction("Delete");
     QAction *renameAction = contextMenu.addAction("Rename");
     QAction *cutAction = contextMenu.addAction("Cut");
-    for (const auto [type, typeName] : theMap.left) {
-      QAction *action = newSubMenu->addAction(QString::fromStdString(typeName));
-      connect(action, &QAction::triggered, this, [=, this]() {
-        resourceManager->addResource(clickedResource,
-                                     "New Resource " + typeName,
-                                     map.at(static_cast<int>(type))());
-      });
-    }
+
     connect(copyAction, &QAction::triggered, this, [=, this]() {
+      clipboardResource.reset();
       clipboardResource = resourceManager->copyResource(clickedResource);
-    });
-    connect(pasteAction, &QAction::triggered, this, [=, this]() {
-      if (clipboardResource) {
-        Resource *newResource =
-            resourceManager->copyResource(clipboardResource.value());
-        resourceManager->insertChild(clickedResource, newResource,
-                                     clickedResource->getChildren().size());
-      }
     });
 
     connect(deleteAction, &QAction::triggered, this,
@@ -210,14 +238,11 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
           dynamic_cast<ResourceTreeItem *>(clickedInsertPoint->parent());
       Resource *parent = parentItem->getResource();
       int index = getIndex(parentItem->indexOfChild(clickedInsertPoint));
-
-      connect(pasteAction, &QAction::triggered, this, [=, this]() {
-        if (clipboardResource) {
-          Resource *newResource =
-              resourceManager->copyResource(clipboardResource.value());
-          resourceManager->insertChild(parent, newResource, index);
-        }
-      });
+      QAction *newAction = contextMenu.addAction("New");
+      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+      newAction->setMenu(newSubMenu);
+      connect(pasteAction, &QAction::triggered, this,
+              [=, this]() { this->pasteAction(parent); });
 
       for (const auto [type, typeName] : theMap.left) {
         QAction *action =
@@ -229,15 +254,11 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
         });
       }
     } else {
-      connect(pasteAction, &QAction::triggered, this, [=, this]() {
-        if (clipboardResource) {
-          Resource *newResource =
-              resourceManager->copyResource(clipboardResource.value());
-          resourceManager->insertChild(
-              resourceManager->getRoot(), newResource,
-              resourceManager->getRoot()->getChildren().size());
-        }
-      });
+      QAction *newAction = contextMenu.addAction("New");
+      QMenu *newSubMenu = new QMenu("Type", &contextMenu);
+      newAction->setMenu(newSubMenu);
+      connect(pasteAction, &QAction::triggered, this,
+              [=, this]() { this->pasteAction(resourceManager->getRoot()); });
       for (const auto [type, typeName] : theMap.left) {
         QAction *action =
             newSubMenu->addAction(QString::fromStdString(typeName));
@@ -328,28 +349,8 @@ void ResourceViewUI::sortResources(const std::string &criteria,
 
 void ResourceViewUI::setupShortcuts() {
   QShortcut *pasteShortcut = new QShortcut(QKeySequence::Paste, this);
-  connect(pasteShortcut, &QShortcut::activated, this, [this]() {
-    if (clipboardResource) {
-      Resource *newResource =
-          resourceManager->copyResource(clipboardResource.value());
-      Resource *target;
-      int index;
-      if (selectedResource) {
-        target = selectedResource.value();
-        index = target->getChildren().size();
-      } else {
-        ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
-            resourceList->currentItem()->parent());
-        target =
-            parentItem ? parentItem->getResource() : resourceManager->getRoot();
-        index = parentItem ? getIndex(parentItem->indexOfChild(
-                                 resourceList->currentItem()))
-                           : getIndex(resourceList->indexOfTopLevelItem(
-                                 resourceList->currentItem()));
-      }
-      resourceManager->insertChild(target, newResource, index);
-    }
-  });
+  connect(pasteShortcut, &QShortcut::activated, this,
+          [this]() { this->pasteAction(this->selectedResource); });
 
   QShortcut *copyShortcut = new QShortcut(QKeySequence::Copy, this);
   connect(copyShortcut, &QShortcut::activated, this, [this]() {
@@ -358,3 +359,13 @@ void ResourceViewUI::setupShortcuts() {
           resourceManager->copyResource(selectedResource.value());
   });
 }
+
+std::optional<Resource *> ResourceViewUI::getSelectedResource() {
+  return selectedResource;
+}
+
+std::optional<QTreeWidgetItem *> ResourceViewUI::getSelectedInsertPoint() {
+  return selectedInsertPoint;
+}
+
+ResourceViewUI::~ResourceViewUI() { delete resourceList; }

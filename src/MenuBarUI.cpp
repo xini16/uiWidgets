@@ -1,32 +1,46 @@
 #include "MenuBarUI.h"
 #include "ResourceManager.h"
+#include "ResourceViewUI.h"
 #include <iostream>
+#include <qtreewidget.h>
 
 MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
+                     ResourceViewUI *resourceViewUI,
                      std::unordered_map<int, std::function<void *()>> map,
                      QWidget *parent)
-    : QWidget(parent), map(map), resourceManager(resourceManager) {
+    : QWidget(parent), map(map), resourceManager(resourceManager),
+      resourceViewUI(resourceViewUI) {
   QHBoxLayout *layout = new QHBoxLayout(this);
 
   addButton = new QPushButton(this);
-  addButton->setText("Add");
+  addButton->setText("Add file");
   addMenu = new QMenu(this);
   for (auto [type, typeName] : theMap.left) {
     QAction *action = addMenu->addAction(QString::fromStdString(typeName));
 
     connect(action, &QAction::triggered, this, [=, this]() {
-      if (selectedResource) {
-        emit addResource(selectedResource.value(), "New Resource " + typeName,
-                         map.at(static_cast<int>(type))());
+      std::optional<Resource *> currentResource =
+          resourceViewUI->getSelectedResource();
+      std::optional<QTreeWidgetItem *> currentInsertPoint =
+          resourceViewUI->getSelectedInsertPoint();
+      if (currentResource) {
+        if (!currentResource.value()->isLeaf())
+          emit addResource(currentResource.value(), "New Resource " + typeName,
+                           map.at(static_cast<int>(type))());
+        else
+          QMessageBox::warning(this, tr("Error"),
+                               tr("Cannot add new file into a file"));
         return;
-      } else if (selectedInsertPoint) {
+      } else if (currentInsertPoint) {
         ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
-            selectedInsertPoint.value()->parent());
+            currentInsertPoint.value()->parent());
         Resource *parent =
             parentItem ? parentItem->getResource() : resourceManager->getRoot();
-        int index = parentItem ? getIndex(parentItem->indexOfChild(
-                                     selectedInsertPoint.value()))
-                               : indexOfTopLevel;
+        int index =
+            parentItem
+                ? getIndex(parentItem->indexOfChild(currentInsertPoint.value()))
+                : getIndex(resourceViewUI->resourceList->indexOfTopLevelItem(
+                      resourceViewUI->resourceList->currentItem()));
         emit insertNewResource(parent, "New Resource " + typeName,
                                map.at(static_cast<int>(type))(), index);
         return;
@@ -40,6 +54,38 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
   }
   connect(addButton, &QPushButton::clicked, this, [=, this]() {
     addMenu->exec(addButton->mapToGlobal(QPoint(0, addButton->height())));
+  });
+  addFolderButton = new QPushButton(this);
+  addFolderButton->setText("Add folder");
+  connect(addFolderButton, &QPushButton::clicked, this, [=, this]() {
+    std::optional<Resource *> currentResource =
+        resourceViewUI->getSelectedResource();
+    std::optional<QTreeWidgetItem *> currentInsertPoint =
+        resourceViewUI->getSelectedInsertPoint();
+    if (currentResource) {
+      if (!currentResource.value()->isLeaf())
+        emit addFolder(currentResource.value(), "New Folder");
+      else
+        QMessageBox::warning(this, tr("Error"),
+                             tr("Cannot add new folder inside a file"));
+      return;
+    } else if (currentInsertPoint) {
+      ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
+          currentInsertPoint.value()->parent());
+      Resource *parent =
+          parentItem ? parentItem->getResource() : resourceManager->getRoot();
+      int index =
+          parentItem
+              ? getIndex(parentItem->indexOfChild(currentInsertPoint.value()))
+              : getIndex(resourceViewUI->resourceList->indexOfTopLevelItem(
+                    resourceViewUI->resourceList->currentItem()));
+      emit insertFolder(parent, "New Folder", index);
+      return;
+    } else {
+      emit addFolder(resourceManager->getRoot(), "New Folder");
+      return;
+    }
+    assert(false);
   });
   QMenu *sortHoverMenu = new QMenu(this);
   QActionGroup *sortGroup = new QActionGroup(this);
@@ -84,10 +130,37 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
           &MenuBarUI::onDeleteResource);
 
   layout->addWidget(addButton);
+  layout->addWidget(addFolderButton);
   layout->addWidget(sortButton);
   layout->addWidget(renameButton);
   layout->addWidget(deleteButton);
   setLayout(layout);
+  connect(this, &MenuBarUI::addResource, resourceManager,
+          &ResourceManager::addResource);
+  connect(this, &MenuBarUI::addFolder, resourceManager,
+          &ResourceManager::addFolder);
+  connect(this, &MenuBarUI::renameResource, resourceManager,
+          &ResourceManager::renameResource);
+  connect(this, &MenuBarUI::sortResources, resourceViewUI,
+          &ResourceViewUI::sortResources);
+  connect(this, &MenuBarUI::deleteResource, resourceManager,
+          &ResourceManager::deleteResource);
+  connect(this, &MenuBarUI::insertNewResource, resourceManager,
+          &ResourceManager::insertNewResource);
+  connect(this, &MenuBarUI::insertFolder, resourceManager,
+          &ResourceManager::insertFolder);
+  connect(this, &MenuBarUI::searchResource, resourceViewUI,
+          &ResourceViewUI::filterResources);
+}
+
+MenuBarUI::~MenuBarUI() {
+  delete addButton;
+  delete addFolderButton;
+  delete sortButton;
+  delete searchBox;
+  delete renameButton;
+  delete deleteButton;
+  delete addMenu;
 }
 
 void MenuBarUI::sortbuttonClicked() {
@@ -110,22 +183,26 @@ void MenuBarUI::sortbuttonClicked() {
 }
 
 void MenuBarUI::onDeleteResource() {
-  if (selectedResource) {
-    emit deleteResource(selectedResource.value());
-    selectedResource = nullptr;
+  std::optional<Resource *> currentResource =
+      resourceViewUI->getSelectedResource();
+  if (currentResource) {
+    emit deleteResource(currentResource.value());
+    currentResource = nullptr;
   }
 }
 
 void MenuBarUI::onRenameResource() {
-  if (selectedResource) {
+  std::optional<Resource *> currentResource =
+      resourceViewUI->getSelectedResource();
+  if (currentResource) {
     bool inputFinished;
     QString newName = QInputDialog::getText(
         this, tr("Rename Resource"), tr("Enter new name for the resource:"),
         QLineEdit::Normal, "", &inputFinished);
     if (inputFinished && !newName.isEmpty()) {
       std::string stdNewName = newName.toStdString();
-      emit renameResource(selectedResource.value(), stdNewName);
-      selectedResource = nullptr;
+      emit renameResource(currentResource.value(), stdNewName);
+      currentResource = {};
     } else {
       QMessageBox::warning(this, tr("Error"), tr("Invalid input"));
       return;
