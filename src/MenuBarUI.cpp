@@ -1,7 +1,6 @@
 #include "MenuBarUI.h"
 #include "ResourceManager.h"
 #include "ResourceViewUI.h"
-#include <cstddef>
 #include <iostream>
 #include <qtreewidget.h>
 

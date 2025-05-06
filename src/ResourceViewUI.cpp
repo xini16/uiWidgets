@@ -112,7 +112,7 @@ void ResourceViewUI::onItemSelected() {
       Resource *startResource = nextResourceItem->getResource();
       assert(startResource);
       selectRange(startResource, currentSelectedResource);
-    } else if (firstSelectedResource) {
+    } else if (firstSelectedResource.has_value()) {
       selectRange(firstSelectedResource.value(), currentSelectedResource);
     } else {
       Resource *firstResource =
@@ -179,7 +179,6 @@ void ResourceViewUI::selectRange(Resource *start, Resource *end) {
 
   int minIdx = std::min(idxStart, idxEnd);
   int maxIdx = std::max(idxStart, idxEnd);
-
   for (int i = minIdx; i <= maxIdx; ++i) {
     ResourceTreeItem *item = allItemsInOrder[i];
     selectWithChildren(item->getResource());
@@ -317,8 +316,8 @@ void ResourceViewUI::pasteAction(std::optional<Resource *> targetItem) {
 }
 
 void ResourceViewUI::copyAction() {
-  clipboardResources.clear();
   if (!selectedResources.empty()) {
+    clipboardResources.clear();
     for (Resource *res : selectedResources) {
       clipboardResources.push_back(resourceManager->copyResource(res));
     }
@@ -502,7 +501,7 @@ void ResourceViewUI::sortResources(const std::string &criteria,
 void ResourceViewUI::setupShortcuts() {
   QShortcut *pasteShortcut = new QShortcut(QKeySequence::Paste, this);
   connect(pasteShortcut, &QShortcut::activated, this,
-          [this]() { this->pasteAction(this->getSelectedResource()); });
+          [this]() { this->pasteAction(firstSelectedResource.value()); });
   QShortcut *copyShortcut = new QShortcut(QKeySequence::Copy, this);
   connect(copyShortcut, &QShortcut::activated, this,
           [this]() { this->copyAction(); });
@@ -512,9 +511,7 @@ std::optional<Resource *> ResourceViewUI::getSelectedResource() {
   if (selectedResources.size() > 1) {
     QMessageBox::warning(this, tr("Multiple Selection"),
                          tr("Only one resource can be selected at a time."));
-    return std::nullopt;
-  }
-  if (selectedResources.size() == 1) {
+  } else if (selectedResources.size() == 1) {
     return *selectedResources.begin();
   }
   return std::nullopt;
