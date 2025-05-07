@@ -27,7 +27,6 @@ public:
       QWidget *parent = nullptr);
   ~ResourceViewUI();
   std::optional<Resource *> getSelectedResource();
-  std::optional<QTreeWidgetItem *> getSelectedInsertPoint();
 
 public slots:
   void filterResources(const QString &searchText);
@@ -47,13 +46,25 @@ private:
   void repaintPage();
   void setupShortcuts();
   void pasteAction(std::optional<Resource *> targetItem);
+  void copyAction();
+  void selectWithChildren(Resource *resource);
+  void deselectWithChildren(Resource *resource);
+  void selectRange(Resource *start, Resource *end);
+  void toggleSelection(Resource *resource);
+  void updateSelectedResourceUI();
+  void keyPressEvent(QKeyEvent *event) override;
+  void keyReleaseEvent(QKeyEvent *event) override;
+
   ResourceManager *resourceManager;
   QVBoxLayout *mainLayout;
   ResourceList *resourceList;
-  std::optional<Resource *> selectedResource = {};
+  std::optional<Resource *> firstSelectedResource = {};
+  std::set<Resource *> selectedResources = {};
   std::optional<QTreeWidgetItem *> selectedInsertPoint = {};
+  bool isShiftPressed = false;
+  bool isCtrlPressed = false;
   std::unordered_map<Resource *, bool> expansionStateMap;
-  std::optional<Resource *> clipboardResource = {};
+  std::vector<Resource *> clipboardResources = {};
   std::unordered_map<int, std::function<void *()>> map;
   SortOrder sortState = None;
   std::string sortCriteria = "name";

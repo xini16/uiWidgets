@@ -8,6 +8,7 @@
 #include <QKeySequence>
 #include <QMenu>
 #include <QMessageBox>
+#include <QMouseEvent>
 #include <QShortcut>
 #include <iostream>
 #include <qnamespace.h>
@@ -80,15 +81,150 @@ void ResourceViewUI::populateTree(QTreeWidgetItem *parentItem,
 }
 
 void ResourceViewUI::onItemSelected() {
-  ResourceTreeItem *item =
-      dynamic_cast<ResourceTreeItem *>(resourceList->currentItem());
-  if (item) {
-    selectedResource = item->getResource();
-    assert(selectedResource);
+  QTreeWidgetItem *currentItem = resourceList->currentItem();
+  ResourceTreeItem *rti = dynamic_cast<ResourceTreeItem *>(currentItem);
+  if (!isShiftPressed && !isCtrlPressed) {
+    selectedResources.clear();
     selectedInsertPoint.reset();
+    firstSelectedResource.reset();
+    if (rti) {
+      Resource *currentSelectedResource = rti->getResource();
+      selectedResources.insert(currentSelectedResource);
+      firstSelectedResource = currentSelectedResource;
+    } else {
+      selectedInsertPoint = currentItem;
+    }
+  } else if (isShiftPressed) {
+    selectedResources.clear();
+    Resource *currentSelectedResource = nullptr;
+    if (rti) {
+      currentSelectedResource = rti->getResource();
+    } else {
+      ResourceTreeItem *resourceItemAbove = dynamic_cast<ResourceTreeItem *>(
+          resourceList->itemAbove(currentItem));
+      currentSelectedResource = resourceItemAbove->getResource();
+      assert(currentSelectedResource);
+    }
+    if (selectedInsertPoint) {
+      ResourceTreeItem *nextResourceItem = dynamic_cast<ResourceTreeItem *>(
+          resourceList->itemBelow(selectedInsertPoint.value()));
+      assert(nextResourceItem);
+      Resource *startResource = nextResourceItem->getResource();
+      assert(startResource);
+      selectRange(startResource, currentSelectedResource);
+    } else if (firstSelectedResource.has_value()) {
+      selectRange(firstSelectedResource.value(), currentSelectedResource);
+    } else {
+      Resource *firstResource =
+          dynamic_cast<ResourceTreeItem *>(resourceList->topLevelItem(1))
+              ->getResource();
+      selectRange(firstResource, currentSelectedResource);
+    }
+  } else if (isCtrlPressed) {
+    if (rti) {
+      toggleSelection(rti->getResource());
+    }
+  }
+  updateSelectedResourceUI();
+}
+
+void ResourceViewUI::selectWithChildren(Resource *resource) {
+  selectedResources.insert(resource);
+  if (!resource->isLeaf()) {
+    for (Resource *child : resource->getChildren()) {
+      selectWithChildren(child);
+    }
+  }
+}
+
+void ResourceViewUI::deselectWithChildren(Resource *resource) {
+  selectedResources.erase(resource);
+  if (!resource->isLeaf()) {
+    for (Resource *child : resource->getChildren()) {
+      deselectWithChildren(child);
+    }
+  }
+}
+
+void ResourceViewUI::selectRange(Resource *start, Resource *end) {
+  selectedResources.clear();
+  resourceList->clearSelection();
+
+  QList<ResourceTreeItem *> allItemsInOrder;
+
+  std::function<void(QTreeWidgetItem *)> collectItems =
+      [&](QTreeWidgetItem *item) {
+        if (auto *rti = dynamic_cast<ResourceTreeItem *>(item)) {
+          allItemsInOrder.append(rti);
+        }
+        for (int i = 0; i < item->childCount(); ++i) {
+          collectItems(item->child(i));
+        }
+      };
+
+  for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
+    collectItems(resourceList->topLevelItem(i));
+  }
+
+  int idxStart = -1, idxEnd = -1;
+  for (int i = 0; i < allItemsInOrder.size(); ++i) {
+    if (allItemsInOrder[i]->getResource() == start)
+      idxStart = i;
+    if (allItemsInOrder[i]->getResource() == end)
+      idxEnd = i;
+  }
+
+  if (idxStart == -1 || idxEnd == -1)
+    return;
+
+  int minIdx = std::min(idxStart, idxEnd);
+  int maxIdx = std::max(idxStart, idxEnd);
+  for (int i = minIdx; i <= maxIdx; ++i) {
+    ResourceTreeItem *item = allItemsInOrder[i];
+    selectWithChildren(item->getResource());
+    item->setSelected(true);
+  }
+}
+
+void ResourceViewUI::toggleSelection(Resource *resource) {
+  if (selectedResources.count(resource)) {
+    deselectWithChildren(resource);
   } else {
-    selectedInsertPoint = resourceList->currentItem();
-    selectedResource.reset();
+    selectWithChildren(resource);
+  }
+}
+
+void ResourceViewUI::updateSelectedResourceUI() {
+  std::function<void(QTreeWidgetItem *)> updateItem =
+      [&](QTreeWidgetItem *item) {
+        if (ResourceTreeItem *rti = dynamic_cast<ResourceTreeItem *>(item)) {
+          bool isSelected = selectedResources.find(rti->getResource()) !=
+                            selectedResources.end();
+          item->setSelected(isSelected);
+        }
+        for (int i = 0; i < item->childCount(); ++i) {
+          updateItem(item->child(i));
+        }
+      };
+
+  for (int i = 0; i < resourceList->topLevelItemCount(); ++i) {
+    updateItem(resourceList->topLevelItem(i));
+  }
+}
+
+void ResourceViewUI::keyPressEvent(QKeyEvent *event) {
+  if (event->key() == Qt::Key_Shift) {
+    isShiftPressed = true;
+  } else if (event->key() == Qt::Key_Control) {
+    isCtrlPressed = true;
+  }
+}
+
+void ResourceViewUI::keyReleaseEvent(QKeyEvent *event) {
+  if (event->key() == Qt::Key_Shift) {
+    isShiftPressed = false;
+  } else if (event->key() == Qt::Key_Control) {
+    isCtrlPressed = false;
   }
 }
 
@@ -103,8 +239,6 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
         dynamic_cast<ResourceTreeItem *>(target->parent());
     Resource *parent = parentItem->getResource();
     int index = getIndex(parentItem->indexOfChild(target));
-    std::cout << "dragged resource has parent " << draggedResource->getParent()
-              << std::endl;
     resourceManager->removeParent(draggedResource);
     resourceManager->insertChild(parent, draggedResource, index);
   } else {
@@ -119,7 +253,6 @@ void ResourceViewUI::handleItemDrop(QTreeWidgetItem *target,
       int index = parent->getChildren().size();
       resourceManager->removeParent(draggedResource);
       resourceManager->insertChild(parent, draggedResource, index);
-      std::cout << "resourceviewUI here completed" << std::endl;
     }
   }
   updateView();
@@ -154,27 +287,40 @@ void ResourceViewUI::restoreExpandedStateFromTree(QTreeWidgetItem *item) {
 }
 
 void ResourceViewUI::pasteAction(std::optional<Resource *> targetItem) {
-  if (clipboardResource) {
-    Resource *newResource =
-        resourceManager->copyResource(clipboardResource.value());
-    Resource *target;
-    int index;
-    if (targetItem) {
-      target = targetItem.value();
-      index = target->getChildren().size();
-    } else {
-      ResourceTreeItem *parentItem = dynamic_cast<ResourceTreeItem *>(
-          resourceList->currentItem()->parent());
-      target =
-          parentItem ? parentItem->getResource() : resourceManager->getRoot();
-      index =
-          parentItem
-              ? getIndex(parentItem->indexOfChild(resourceList->currentItem()))
-              : getIndex(resourceList->indexOfTopLevelItem(
-                    resourceList->currentItem()));
+  if (clipboardResources.empty())
+    return;
+  Resource *target;
+  int index;
+  if (targetItem) {
+    target = targetItem.value();
+    index = target->getChildren().size();
+  } else {
+    ResourceTreeItem *parentItem =
+        dynamic_cast<ResourceTreeItem *>(resourceList->currentItem()->parent());
+    target =
+        parentItem ? parentItem->getResource() : resourceManager->getRoot();
+    index =
+        parentItem
+            ? getIndex(parentItem->indexOfChild(resourceList->currentItem()))
+            : getIndex(resourceList->indexOfTopLevelItem(
+                  resourceList->currentItem()));
+  }
+  if (target->isLeaf()) {
+    QMessageBox::warning(this, tr("Error"), tr("Cannot paste into a file."));
+    return;
+  }
+  for (Resource *copied : clipboardResources) {
+    Resource *newCopy = resourceManager->copyResource(copied);
+    resourceManager->insertChild(target, newCopy, index++);
+  }
+}
+
+void ResourceViewUI::copyAction() {
+  if (!selectedResources.empty()) {
+    clipboardResources.clear();
+    for (Resource *res : selectedResources) {
+      clipboardResources.push_back(resourceManager->copyResource(res));
     }
-    if (!target->isLeaf())
-      resourceManager->insertChild(target, newResource, index);
   }
 }
 
@@ -202,34 +348,39 @@ void ResourceViewUI::showContextMenu(const QPoint &pos) {
       connect(pasteAction, &QAction::triggered, this,
               [=, this]() { this->pasteAction(clickedResource); });
     }
+    if (selectedResources.size() == 1) {
+      QAction *renameAction = contextMenu.addAction("Rename");
+      connect(renameAction, &QAction::triggered, this, [=, this]() {
+        bool inputFinished;
+        QString newName = QInputDialog::getText(
+            this, tr("Rename Resource"), tr("Enter new name for the resource:"),
+            QLineEdit::Normal, "", &inputFinished);
+        if (inputFinished && !newName.isEmpty()) {
+          std::string stdNewName = newName.toStdString();
+          resourceManager->renameResource(clickedResource, stdNewName);
+        } else {
+          QMessageBox::warning(this, tr("Error"), tr("Invalid input"));
+          return;
+        }
+      });
+    }
     QAction *copyAction = contextMenu.addAction("Copy");
     QAction *deleteAction = contextMenu.addAction("Delete");
-    QAction *renameAction = contextMenu.addAction("Rename");
-    QAction *cutAction = contextMenu.addAction("Cut");
-
-    connect(copyAction, &QAction::triggered, this, [=, this]() {
-      clipboardResource.reset();
-      clipboardResource = resourceManager->copyResource(clickedResource);
-    });
-
-    connect(deleteAction, &QAction::triggered, this,
-            [=, this]() { resourceManager->deleteResource(clickedResource); });
-    connect(renameAction, &QAction::triggered, this, [=, this]() {
-      bool inputFinished;
-      QString newName = QInputDialog::getText(
-          this, tr("Rename Resource"), tr("Enter new name for the resource:"),
-          QLineEdit::Normal, "", &inputFinished);
-      if (inputFinished && !newName.isEmpty()) {
-        std::string stdNewName = newName.toStdString();
-        resourceManager->renameResource(clickedResource, stdNewName);
-      } else {
-        QMessageBox::warning(this, tr("Error"), tr("Invalid input"));
-        return;
+    connect(copyAction, &QAction::triggered, this,
+            [=, this]() { this->copyAction(); });
+    connect(deleteAction, &QAction::triggered, this, [=, this]() {
+      for (Resource *res : selectedResources) {
+        resourceManager->deleteResource(res);
       }
+      selectedResources.clear();
     });
+
+    QAction *cutAction = contextMenu.addAction("Cut");
     connect(cutAction, &QAction::triggered, this, [=, this]() {
-      resourceManager->removeParent(clickedResource);
-      clipboardResource = clickedResource;
+      this->copyAction();
+      for (Resource *res : selectedResources) {
+        resourceManager->removeParent(res);
+      }
     });
   } else {
     QTreeWidgetItem *clickedInsertPoint = resourceList->itemAt(pos);
@@ -350,22 +501,20 @@ void ResourceViewUI::sortResources(const std::string &criteria,
 void ResourceViewUI::setupShortcuts() {
   QShortcut *pasteShortcut = new QShortcut(QKeySequence::Paste, this);
   connect(pasteShortcut, &QShortcut::activated, this,
-          [this]() { this->pasteAction(this->selectedResource); });
-
+          [this]() { this->pasteAction(firstSelectedResource.value()); });
   QShortcut *copyShortcut = new QShortcut(QKeySequence::Copy, this);
-  connect(copyShortcut, &QShortcut::activated, this, [this]() {
-    if (selectedResource)
-      clipboardResource =
-          resourceManager->copyResource(selectedResource.value());
-  });
+  connect(copyShortcut, &QShortcut::activated, this,
+          [this]() { this->copyAction(); });
 }
 
 std::optional<Resource *> ResourceViewUI::getSelectedResource() {
-  return selectedResource;
-}
-
-std::optional<QTreeWidgetItem *> ResourceViewUI::getSelectedInsertPoint() {
-  return selectedInsertPoint;
+  if (selectedResources.size() > 1) {
+    QMessageBox::warning(this, tr("Multiple Selection"),
+                         tr("Only one resource can be selected at a time."));
+  } else if (selectedResources.size() == 1) {
+    return *selectedResources.begin();
+  }
+  return std::nullopt;
 }
 
 ResourceViewUI::~ResourceViewUI() { delete resourceList; }

@@ -22,7 +22,7 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
       std::optional<Resource *> currentResource =
           resourceViewUI->getSelectedResource();
       std::optional<QTreeWidgetItem *> currentInsertPoint =
-          resourceViewUI->getSelectedInsertPoint();
+          resourceViewUI->selectedInsertPoint;
       if (currentResource) {
         if (!currentResource.value()->isLeaf())
           emit addResource(currentResource.value(), "New Resource " + typeName,
@@ -61,7 +61,7 @@ MenuBarUI::MenuBarUI(ResourceManager *resourceManager,
     std::optional<Resource *> currentResource =
         resourceViewUI->getSelectedResource();
     std::optional<QTreeWidgetItem *> currentInsertPoint =
-        resourceViewUI->getSelectedInsertPoint();
+        resourceViewUI->selectedInsertPoint;
     if (currentResource) {
       if (!currentResource.value()->isLeaf())
         emit addFolder(currentResource.value(), "New Folder");
@@ -183,12 +183,10 @@ void MenuBarUI::sortbuttonClicked() {
 }
 
 void MenuBarUI::onDeleteResource() {
-  std::optional<Resource *> currentResource =
-      resourceViewUI->getSelectedResource();
-  if (currentResource) {
-    emit deleteResource(currentResource.value());
-    currentResource = nullptr;
+  for (Resource *res : resourceViewUI->selectedResources) {
+    resourceManager->deleteResource(res);
   }
+  resourceViewUI->selectedResources.clear();
 }
 
 void MenuBarUI::onRenameResource() {
